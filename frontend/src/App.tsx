@@ -1,12 +1,15 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { VibeMode } from "./modes/VibeMode";
 import { SpecMode } from "./modes/SpecMode";
 import { HarnessMode } from "./modes/HarnessMode";
 import { Login } from "./components/Login";
+import { fetchEpoch } from "./lib/session";
 
 type Mode = "vibe" | "spec" | "harness";
 
 const AUTH_KEY = "twtb_authed";
+const EPOCH_KEY = "twtb:epoch";
+const SNAP_KEYS = ["twtb:vibe", "twtb:spec", "twtb:harness"];
 
 const NAV: { id: Mode; label: string }[] = [
   { id: "vibe", label: "Vibecoding" },
@@ -24,6 +27,30 @@ export default function App() {
   const [mode, setMode] = useState<Mode>("vibe");
   const [resetN, setResetN] = useState<Record<Mode, number>>({ vibe: 0, spec: 0, harness: 0 });
   const [authed, setAuthed] = useState(() => sessionStorage.getItem(AUTH_KEY) === "1");
+
+  // Poll the shared session epoch; when the host starts a fresh session, log out,
+  // clear saved work, and reload — resetting every participant.
+  useEffect(() => {
+    async function check() {
+      try {
+        const epoch = String(await fetchEpoch());
+        const local = localStorage.getItem(EPOCH_KEY);
+        if (local === null) {
+          localStorage.setItem(EPOCH_KEY, epoch);
+        } else if (local !== epoch) {
+          localStorage.setItem(EPOCH_KEY, epoch);
+          SNAP_KEYS.forEach((k) => localStorage.removeItem(k));
+          sessionStorage.removeItem(AUTH_KEY);
+          window.location.reload();
+        }
+      } catch {
+        /* offline / backend down — ignore */
+      }
+    }
+    check();
+    const t = setInterval(check, 5000);
+    return () => clearInterval(t);
+  }, []);
 
   function unlock() {
     sessionStorage.setItem(AUTH_KEY, "1");

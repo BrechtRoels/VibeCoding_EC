@@ -164,6 +164,11 @@ body {
   color: var(--c-fg2); font-size: 13px; cursor: pointer; font-family: inherit; transition: all 0.15s;
 }
 .btn-ghost:hover { background: var(--c-raised); color: var(--c-fg); }
+.btn-danger {
+  padding: 8px 14px; border-radius: var(--r-sm); border: 1px solid var(--c-danger); background: var(--c-danger);
+  color: #fff; font-size: 13.5px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.15s ease;
+}
+.btn-danger:hover { filter: brightness(1.07); box-shadow: var(--shadow-sm); }
 
 /* ---- Inputs ---- */
 input, textarea {

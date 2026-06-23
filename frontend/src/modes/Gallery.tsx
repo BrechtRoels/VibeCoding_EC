@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Preview } from "../components/Preview";
-import { fetchGallery, clearGallery, MODE_LABEL, type GalleryEntry } from "../lib/gallery";
+import { fetchGallery, MODE_LABEL, type GalleryEntry } from "../lib/gallery";
+import { resetSession } from "../lib/session";
 
 type Filter = "all" | "vibe" | "spec" | "harness";
 const ORDER: GalleryEntry["mode"][] = ["vibe", "spec", "harness"];
@@ -29,9 +30,13 @@ export function Gallery({ onClose }: { onClose: () => void }) {
 
   const groups = filter === "all" ? ORDER : [filter];
 
-  async function onClear() {
-    if (window.confirm("Clear the entire gallery wall for everyone?")) {
-      await clearGallery();
+  async function onFreshSession() {
+    if (
+      window.confirm(
+        "Start a fresh session?\n\nThis clears the wall AND logs out & resets every participant (their work is cleared)."
+      )
+    ) {
+      await resetSession();
       setEntries([]);
     }
   }
@@ -52,7 +57,9 @@ export function Gallery({ onClose }: { onClose: () => void }) {
               {f === "all" ? "All" : MODE_LABEL[f]} <span className="ct">{counts[f] ?? 0}</span>
             </button>
           ))}
-          <button className="btn-ghost" onClick={onClear}>Clear</button>
+          <button className="btn-danger" onClick={onFreshSession} title="Clear the wall and reset all participants">
+            🔄 Fresh session
+          </button>
           <button className="btn-secondary" onClick={onClose}>← Back to studio</button>
         </div>
       </div>
