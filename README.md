@@ -44,17 +44,29 @@ npm run dev                   # http://localhost:5180  (proxies /api → :8011)
 
 ## Deploy to Vercel (one project: frontend + backend)
 
-The repo is configured so a single Vercel project serves the Vite frontend (static,
-on the CDN) and the FastAPI app as a Python serverless function under `/api`
-([vercel.json](vercel.json), [api/index.py](api/index.py), root `requirements.txt`).
+[vercel.json](vercel.json) uses Vercel's multi-service config: the **frontend**
+service (`frontend/`, Vite) is served at `/`, and the **backend** service
+(`backend/`, FastAPI via [backend/api/index.py](backend/api/index.py)) is mounted under
+`/_/backend`.
 
-1. Import the repo into Vercel (root directory = repo root). It auto-detects
-   `vercel.json` — no framework preset needed.
-2. Set **Environment Variables** in the Vercel project:
-   - `GENAI_API_KEY` (required), `GENAI_LLM_MODEL` (Opus id), `GENAI_CHAT_MODEL`
-     (e.g. `bedrock.anthropic.claude-haiku-4-5`)
-   - optional: `GENAI_MAX_OUTPUT_TOKENS`, `GENAI_MAX_CONCURRENCY`, `USE_MOCK_AI`
+How the two halves line up:
+- The frontend calls the backend at `${VITE_API_BASE}/api/...` — set
+  **`VITE_API_BASE=/_/backend`** so production calls route to the backend service.
+  (In local dev it's unset, so calls hit `/api/...` and Vite proxies them.)
+- The backend strips the `/_/backend` prefix itself (`StripPrefixMiddleware`, overridable
+  via `ROUTE_PREFIX`), so its `/api/*` routes match whether or not the platform strips it.
+
+1. Import the repo into Vercel; it reads `vercel.json`.
+2. **Environment variables:**
+   - *backend service:* `GENAI_API_KEY` (required), `GENAI_LLM_MODEL` (Opus id),
+     `GENAI_CHAT_MODEL` (e.g. `bedrock.anthropic.claude-haiku-4-5`); optional
+     `GENAI_MAX_OUTPUT_TOKENS`, `GENAI_MAX_CONCURRENCY`, `ROUTE_PREFIX`, `USE_MOCK_AI`.
+   - *frontend service:* `VITE_API_BASE=/_/backend` (build-time).
 3. Deploy. The studio is at `/`, the projected wall at `/wall.html`.
+
+> `experimentalServices` is a newer Vercel feature — if the first deploy needs an
+> entrypoint/build tweak, the only moving parts are this file, `backend/api/index.py`,
+> and the two env vars above.
 
 **Serverless caveats** (Vercel ≠ a long-lived server):
 - **Streaming:** Vercel's Python runtime tends to buffer, so tokens may arrive in one

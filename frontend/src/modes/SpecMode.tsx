@@ -5,6 +5,7 @@ import { parseTasks } from "../components/TaskChecklist";
 import { streamOnce } from "../lib/streamOnce";
 import { cleanHtml } from "../lib/useStream";
 import { loadSnap, saveSnap, sanitizeMessages } from "../lib/persist";
+import { apiUrl } from "../lib/api";
 
 type DocKey = "requirements" | "design" | "tasks";
 type Issue = { severity: "high" | "medium" | "low"; ref?: string; issue: string; detail: string };
@@ -90,7 +91,7 @@ export function SpecMode() {
   }
 
   useEffect(() => {
-    fetch("/api/spec/steering").then((r) => r.json()).then((d) => setSteering(d.files)).catch(() => {});
+    fetch(apiUrl("/api/spec/steering")).then((r) => r.json()).then((d) => setSteering(d.files)).catch(() => {});
   }, []);
 
   const activeKey = (Object.keys(FILE_OF) as DocKey[]).find((k) => FILE_OF[k] === activeFile);
@@ -176,7 +177,7 @@ export function SpecMode() {
   async function validate(theIdea: string, built: string) {
     const aid = push({ role: "agent", author: "Kiro · verify", text: "Verifying index.html against requirements.md & design.md…", streaming: true });
     try {
-      const res = await fetch("/api/spec/validate", {
+      const res = await fetch(apiUrl("/api/spec/validate"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ idea: theIdea, html: built, requirements: docs.requirements, design: docs.design }),

@@ -1,3 +1,5 @@
+import { apiUrl } from "./api";
+
 export type GalleryEntry = {
   id: string;
   mode: "vibe" | "spec" | "harness";
@@ -26,7 +28,7 @@ export function ensureName(): string {
 }
 
 export async function fetchGallery(): Promise<GalleryEntry[]> {
-  const r = await fetch("/api/gallery");
+  const r = await fetch(apiUrl("/api/gallery"));
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
   const d = await r.json();
   return d.entries ?? [];
@@ -38,7 +40,7 @@ export async function submitGallery(
   html: string,
   author: string
 ): Promise<void> {
-  await fetch("/api/gallery", {
+  await fetch(apiUrl("/api/gallery"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ mode, title, html, author }),
@@ -46,5 +48,5 @@ export async function submitGallery(
 }
 
 export async function clearGallery(): Promise<void> {
-  await fetch("/api/gallery/clear", { method: "POST" });
+  await fetch(apiUrl("/api/gallery/clear"), { method: "POST" });
 }

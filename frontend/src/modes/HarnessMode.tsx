@@ -4,6 +4,7 @@ import { GallerySubmit } from "../components/GallerySubmit";
 import { streamOnce } from "../lib/streamOnce";
 import { cleanHtml } from "../lib/useStream";
 import { loadSnap, saveSnap, sanitizeMessages } from "../lib/persist";
+import { apiUrl } from "../lib/api";
 
 type HFile = { name: string; lang: string; content: string };
 type Config = { you_control: string; enforced_by: string[]; files: HFile[] };
@@ -48,7 +49,7 @@ export function HarnessMode() {
     setMessages((a) => a.map((x) => (x.id === id ? { ...x, ...patch } : x)));
 
   useEffect(() => {
-    fetch("/api/harness/config").then((r) => r.json()).then(setConfig).catch(() => setConfig(null));
+    fetch(apiUrl("/api/harness/config")).then((r) => r.json()).then(setConfig).catch(() => setConfig(null));
   }, []);
 
   // Harness keeps its locked rule files pre-loaded (that's the point).
@@ -83,7 +84,7 @@ export function HarnessMode() {
     const cid = push({ role: "system", kind: "start", text: "house-lint · running enforcement gate", streaming: true });
     let data: { passed: boolean; results: CheckResult[] };
     try {
-      const res = await fetch("/api/harness/check", {
+      const res = await fetch(apiUrl("/api/harness/check"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ html: built }),

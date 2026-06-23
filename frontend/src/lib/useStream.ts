@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from "react";
+import { apiUrl } from "./api";
 
 type StreamState = {
   text: string;
@@ -39,7 +40,7 @@ export function useStream() {
 
       let full = "";
       try {
-        const res = await fetch(url, {
+        const res = await fetch(apiUrl(url), {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),

@@ -1,10 +1,12 @@
+import { apiUrl } from "./api";
+
 /** One-shot SSE consumer for parallel jobs (e.g. Compare variants). */
 export async function streamOnce(
   url: string,
   body: unknown,
   onDelta?: (full: string) => void
 ): Promise<string> {
-  const res = await fetch(url, {
+  const res = await fetch(apiUrl(url), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
