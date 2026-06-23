@@ -434,6 +434,10 @@ label.fieldlabel { font-size: 12px; font-weight: 600; color: var(--c-fg2); displ
   font-family: "JetBrains Mono", monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ide-title strong { color: var(--c-fg2); font-weight: 600; }
 .ide-actions { display: flex; gap: 7px; align-items: center; }
+.ide-reset-btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 12px; }
+.ide-reset-btn svg { transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1); }
+.ide-reset-btn:hover { border-color: var(--c-primary); color: var(--c-primary); }
+.ide-reset-btn:hover svg { transform: rotate(-360deg); }
 
 .ide-body { flex: 1; display: grid; grid-template-columns: 232px minmax(0, 1fr) 400px; min-height: 0; }
 .ide-explorer, .ide-editor, .ide-chat { min-height: 0; }
