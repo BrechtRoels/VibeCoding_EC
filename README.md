@@ -42,6 +42,34 @@ npm install
 npm run dev                   # http://localhost:5180  (proxies /api → :8011)
 ```
 
+## Deploy to Vercel (one project: frontend + backend)
+
+The repo is configured so a single Vercel project serves the Vite frontend (static,
+on the CDN) and the FastAPI app as a Python serverless function under `/api`
+([vercel.json](vercel.json), [api/index.py](api/index.py), root `requirements.txt`).
+
+1. Import the repo into Vercel (root directory = repo root). It auto-detects
+   `vercel.json` — no framework preset needed.
+2. Set **Environment Variables** in the Vercel project:
+   - `GENAI_API_KEY` (required), `GENAI_LLM_MODEL` (Opus id), `GENAI_CHAT_MODEL`
+     (e.g. `bedrock.anthropic.claude-haiku-4-5`)
+   - optional: `GENAI_MAX_OUTPUT_TOKENS`, `GENAI_MAX_CONCURRENCY`, `USE_MOCK_AI`
+3. Deploy. The studio is at `/`, the projected wall at `/wall.html`.
+
+**Serverless caveats** (Vercel ≠ a long-lived server):
+- **Streaming:** Vercel's Python runtime tends to buffer, so tokens may arrive in one
+  burst at the end instead of live. The app still works (the "thinking" loading screen
+  covers the wait); the live typewriter effect is best on a normal server (`./run.sh`).
+- **Function duration:** Opus app builds can take 30–90s. Use a plan whose
+  `maxDuration` allows it (Pro = 300s); on tight limits, set a faster `GENAI_LLM_MODEL`.
+- **Gallery wall:** the serverless filesystem is ephemeral/per-instance, so the shared
+  wall won't persist or be shared across users on Vercel as-is. Point `GALLERY_DIR` at a
+  persistent volume, or wire an external store (Vercel KV/Postgres). It degrades
+  gracefully (in-memory, never crashes) otherwise.
+
+For full live streaming + a durable shared wall, hosting the backend on a long-lived
+runtime (Render / Railway / Fly) and the frontend on Vercel is the smoother split.
+
 ## API
 
 | Endpoint | Purpose |

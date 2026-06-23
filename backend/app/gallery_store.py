@@ -6,10 +6,23 @@ Stored as a JSON file on disk so submissions survive restarts and every client
 import asyncio
 import json
 import os
+import tempfile
 import time
 import uuid
 
-DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
+
+def _data_dir() -> str:
+    # Explicit override wins; on serverless (Vercel) only /tmp is writable and is
+    # ephemeral/per-instance — for a durable shared wall, point GALLERY_DIR at a
+    # persistent volume or wire an external store (Vercel KV/Postgres).
+    if os.getenv("GALLERY_DIR"):
+        return os.environ["GALLERY_DIR"]
+    if os.getenv("VERCEL"):
+        return os.path.join(tempfile.gettempdir(), "twtb")
+    return os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
+
+
+DATA_DIR = _data_dir()
 PATH = os.path.join(DATA_DIR, "gallery.json")
 MAX_ENTRIES = 400
 
@@ -20,21 +33,25 @@ _entries: list[dict] | None = None
 def _ensure() -> list[dict]:
     global _entries
     if _entries is None:
-        os.makedirs(DATA_DIR, exist_ok=True)
         try:
             with open(PATH, encoding="utf-8") as f:
                 _entries = json.load(f)
-        except (FileNotFoundError, json.JSONDecodeError):
+        except (FileNotFoundError, json.JSONDecodeError, OSError):
             _entries = []
     return _entries
 
 
 def _save(entries: list[dict]) -> None:
-    os.makedirs(DATA_DIR, exist_ok=True)
-    tmp = PATH + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(entries, f)
-    os.replace(tmp, PATH)
+    # Best-effort: on a read-only serverless filesystem this fails silently and the
+    # gallery still works in-memory for the instance's lifetime.
+    try:
+        os.makedirs(DATA_DIR, exist_ok=True)
+        tmp = PATH + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(entries, f)
+        os.replace(tmp, PATH)
+    except OSError:
+        pass
 
 
 def list_all() -> list[dict]:
