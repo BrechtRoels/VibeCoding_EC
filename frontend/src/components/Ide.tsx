@@ -191,7 +191,12 @@ export function Ide(props: Props) {
         </div>
         <div className="ide-actions">
           {props.onReset && (
-            <button className="ide-reset" onClick={props.onReset} title="Start from blank">
+            <button
+              className="btn-secondary"
+              style={{ padding: "6px 11px", fontSize: 12 }}
+              onClick={props.onReset}
+              title="Start from blank"
+            >
               ↺ Reset
             </button>
           )}
