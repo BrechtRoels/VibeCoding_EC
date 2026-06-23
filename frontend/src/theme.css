@@ -556,13 +556,17 @@ label.fieldlabel { font-size: 12px; font-weight: 600; color: var(--c-fg2); displ
   background: radial-gradient(1100px 600px at 50% -10%, rgba(253,81,8,0.05), transparent 60%), #eaecef; }
 .wall-head { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 16px;
   padding: 18px 28px; background: rgba(255,255,255,0.85); backdrop-filter: blur(12px); border-bottom: 1px solid var(--c-edge); }
-.wall-title { display: flex; align-items: center; gap: 13px; }
+.wall-title { display: flex; align-items: center; gap: 13px; min-width: 0; flex-shrink: 1; }
+.wall-title > div { min-width: 0; }
 .wall-title .mark { width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
   display: grid; place-items: center; color: #fff;
   background: linear-gradient(135deg, var(--c-primary), var(--c-accent2)); box-shadow: 0 4px 12px rgba(253,81,8,0.3); }
-.wall-title h1 { font-size: 19px; font-weight: 700; margin: 0; letter-spacing: -0.02em; }
-.wall-title p { font-size: 12.5px; color: var(--c-fg2); margin: 2px 0 0; }
-.wall-filters { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.wall-title h1 { font-size: 19px; font-weight: 700; margin: 0; letter-spacing: -0.02em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wall-title p { font-size: 12.5px; color: var(--c-fg2); margin: 2px 0 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wall-filters { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; flex-shrink: 0; }
+.wall-filters .wall-chip, .wall-filters .btn-secondary { white-space: nowrap; }
 .wall-chip { display: inline-flex; align-items: center; gap: 7px; padding: 7px 13px; border-radius: 99px;
   border: 1px solid var(--c-edge-strong); background: #fff; color: var(--c-fg2); font-size: 13px; font-weight: 600;
   cursor: pointer; font-family: inherit; transition: all 0.15s; }
@@ -592,3 +596,17 @@ label.fieldlabel { font-size: 12px; font-weight: 600; color: var(--c-fg2); displ
 .mode-badge.m-vibe { background: var(--c-primary-10); color: var(--c-primary); }
 .mode-badge.m-spec { background: rgba(59,130,246,0.12); color: #2563eb; }
 .mode-badge.m-harness { background: rgba(22,163,74,0.12); color: var(--c-success); }
+
+/* Keep the wall header on a single row by scaling controls down as needed */
+@media (max-width: 1000px) {
+  .wall-head { padding: 14px 18px; gap: 10px; }
+  .wall-chip { padding: 6px 10px; font-size: 12px; }
+  .wall-chip .ct { padding: 1px 6px; }
+  .wall-filters .btn-secondary { padding: 6px 11px; font-size: 12px; }
+  .wall-title p { display: none; }
+}
+@media (max-width: 760px) {
+  .wall-title h1 { font-size: 16px; }
+  .wall-chip, .wall-filters .btn-secondary { padding: 5px 9px; font-size: 11.5px; }
+  .wall-filters { gap: 6px; }
+}
