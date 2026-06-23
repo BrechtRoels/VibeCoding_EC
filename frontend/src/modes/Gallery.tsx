@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Preview } from "../components/Preview";
 import { CodeGlyph } from "../components/CodeGlyph";
+import { RefreshIcon } from "../components/RefreshIcon";
 import { fetchGallery, MODE_LABEL, type GalleryEntry } from "../lib/gallery";
 import { resetSession } from "../lib/session";
 
@@ -58,8 +59,8 @@ export function Gallery({ onClose }: { onClose: () => void }) {
               {f === "all" ? "All" : MODE_LABEL[f]} <span className="ct">{counts[f] ?? 0}</span>
             </button>
           ))}
-          <button className="btn-danger" onClick={onFreshSession} title="Clear the wall and reset all participants">
-            🔄 Fresh session
+          <button className="btn-secondary btn-ico" onClick={onFreshSession} title="Clear the wall and reset all participants">
+            <RefreshIcon size={13} /> Fresh session
           </button>
           <button className="btn-secondary" onClick={onClose}>← Back to studio</button>
         </div>
