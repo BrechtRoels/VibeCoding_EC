@@ -21,7 +21,7 @@ const INTRO: ChatMsg[] = [
   },
 ];
 
-export function HarnessMode() {
+export function HarnessMode({ onReset }: { onReset?: () => void }) {
   const [snap] = useState<any>(() => loadSnap(SNAP) ?? {});
   const [config, setConfig] = useState<Config | null>(null);
   const [input, setInput] = useState("");
@@ -159,6 +159,7 @@ export function HarnessMode() {
     <Ide
       projectName="harness-app"
       chatTitle="Harness Chat"
+      onReset={onReset}
       files={files}
       activeFile={activeFile}
       onSelectFile={setActiveFile}

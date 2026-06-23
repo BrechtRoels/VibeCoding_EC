@@ -41,7 +41,7 @@ const INTRO: ChatMsg[] = [
   },
 ];
 
-export function SpecMode() {
+export function SpecMode({ onReset }: { onReset?: () => void }) {
   const [snap] = useState<any>(() => loadSnap(SNAP) ?? {});
   const [idea, setIdea] = useState<string>(snap.idea ?? "");
   const [input, setInput] = useState("");
@@ -345,6 +345,7 @@ export function SpecMode() {
       projectName={`kiro · ${slug}`}
       chatTitle="Kiro Spec Workflow"
       hideUnwritten
+      onReset={onReset}
       files={files}
       activeFile={activeFile}
       onSelectFile={setActiveFile}

@@ -14,13 +14,26 @@ const NAV: { id: Mode; label: string }[] = [
   { id: "harness", label: "Harness" },
 ];
 
+const MODE_LABEL: Record<Mode, string> = {
+  vibe: "Vibecoding",
+  spec: "Spec-Driven",
+  harness: "Harness",
+};
+
 export default function App() {
   const [mode, setMode] = useState<Mode>("vibe");
+  const [resetN, setResetN] = useState<Record<Mode, number>>({ vibe: 0, spec: 0, harness: 0 });
   const [authed, setAuthed] = useState(() => sessionStorage.getItem(AUTH_KEY) === "1");
 
   function unlock() {
     sessionStorage.setItem(AUTH_KEY, "1");
     setAuthed(true);
+  }
+
+  function resetMode(m: Mode) {
+    if (!window.confirm(`Start over with a blank ${MODE_LABEL[m]}? This clears the current work.`)) return;
+    localStorage.removeItem(`twtb:${m}`);
+    setResetN((r) => ({ ...r, [m]: r[m] + 1 }));
   }
 
   if (!authed) return <Login onUnlock={unlock} />;
@@ -58,9 +71,9 @@ export default function App() {
       </div>
 
       <main className="main-fs">
-        {mode === "vibe" && <VibeMode />}
-        {mode === "spec" && <SpecMode />}
-        {mode === "harness" && <HarnessMode />}
+        {mode === "vibe" && <VibeMode key={`vibe-${resetN.vibe}`} onReset={() => resetMode("vibe")} />}
+        {mode === "spec" && <SpecMode key={`spec-${resetN.spec}`} onReset={() => resetMode("spec")} />}
+        {mode === "harness" && <HarnessMode key={`harness-${resetN.harness}`} onReset={() => resetMode("harness")} />}
       </main>
     </div>
   );

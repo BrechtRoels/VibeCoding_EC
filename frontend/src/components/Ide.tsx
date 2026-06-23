@@ -51,6 +51,8 @@ type Props = {
     actions?: ReactNode;
   };
   titleActions?: ReactNode;
+  /** Optional "start from blank" handler — renders a Reset button in the titlebar. */
+  onReset?: () => void;
 };
 
 const GLYPH: Record<NonNullable<ChatMsg["kind"]>, string> = {
@@ -187,7 +189,14 @@ export function Ide(props: Props) {
         <div className="ide-title">
           <strong>{props.projectName}</strong> — {editor.filename || "no file"}
         </div>
-        <div className="ide-actions">{props.titleActions}</div>
+        <div className="ide-actions">
+          {props.onReset && (
+            <button className="ide-reset" onClick={props.onReset} title="Start from blank">
+              ↺ Reset
+            </button>
+          )}
+          {props.titleActions}
+        </div>
       </div>
 
       <div className="ide-body">

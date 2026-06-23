@@ -17,7 +17,7 @@ const INTRO: ChatMsg[] = [
   },
 ];
 
-export function VibeMode() {
+export function VibeMode({ onReset }: { onReset?: () => void }) {
   const [snap] = useState<any>(() => loadSnap(SNAP) ?? {});
   const [idea, setIdea] = useState<string>(snap.idea ?? "");
   const [versions, setVersions] = useState<Version[]>(snap.versions ?? []);
@@ -117,6 +117,7 @@ export function VibeMode() {
       projectName="vibe-app"
       chatTitle="Vibe Chat"
       hideUnwritten
+      onReset={onReset}
       files={files}
       activeFile={activeFile}
       onSelectFile={(n) => {
