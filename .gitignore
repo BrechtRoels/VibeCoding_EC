@@ -11,3 +11,6 @@ frontend/dist/
 
 # Misc
 .DS_Store
+
+# TS build cache
+frontend/tsconfig.tsbuildinfo
