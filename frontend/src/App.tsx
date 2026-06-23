@@ -3,6 +3,7 @@ import { VibeMode } from "./modes/VibeMode";
 import { SpecMode } from "./modes/SpecMode";
 import { HarnessMode } from "./modes/HarnessMode";
 import { Login } from "./components/Login";
+import { CodeGlyph } from "./components/CodeGlyph";
 import { fetchEpoch } from "./lib/session";
 
 type Mode = "vibe" | "spec" | "harness";
@@ -68,7 +69,7 @@ export default function App() {
   return (
     <div className="app-fs">
       <div className="app-wordmark">
-        <span className="mark" />
+        <span className="mark"><CodeGlyph size={15} /></span>
         <span className="wm-text">
           <span className="wm-title">Three Ways to Build</span>
           <span className="wm-sub">AI-assisted development studio</span>

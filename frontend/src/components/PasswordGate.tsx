@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { CodeGlyph } from "./CodeGlyph";
 
 type Props = {
   title: string;
@@ -35,7 +36,7 @@ export function PasswordGate({ title, subtitle, password, storageKey, onUnlock, 
         <span className="orb d" />
       </div>
       <div className={`login-card ${error ? "login-shake" : ""}`}>
-        <div className="login-brand">▦</div>
+        <div className="login-brand"><CodeGlyph size={28} /></div>
         <h1>{title}</h1>
         <p className="sub">{subtitle}</p>
         <form className="login-form" onSubmit={submit}>

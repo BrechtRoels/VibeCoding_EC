@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Preview } from "../components/Preview";
+import { CodeGlyph } from "../components/CodeGlyph";
 import { fetchGallery, MODE_LABEL, type GalleryEntry } from "../lib/gallery";
 import { resetSession } from "../lib/session";
 
@@ -45,7 +46,7 @@ export function Gallery({ onClose }: { onClose: () => void }) {
     <div className="wall">
       <div className="wall-head">
         <div className="wall-title">
-          <span className="mark" />
+          <span className="mark"><CodeGlyph size={19} /></span>
           <div>
             <h1>Gallery Wall</h1>
             <p>Same prompts, three philosophies — watch the look diverge in Vibecoding and converge in Harness.</p>
