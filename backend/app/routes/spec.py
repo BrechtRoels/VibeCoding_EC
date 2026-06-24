@@ -19,6 +19,8 @@ class DocBody(BaseModel):
     idea: str
     requirements: str = ""
     design: str = ""
+    feedback: str = ""
+    current: str = ""
 
 
 class TaskBody(BaseModel):
@@ -46,11 +48,11 @@ async def steering():
 @router.post("/doc")
 async def doc(body: DocBody):
     if body.kind == "requirements":
-        system, user = prompts.spec_requirements(body.idea)
+        system, user = prompts.spec_requirements(body.idea, body.feedback, body.current)
     elif body.kind == "design":
-        system, user = prompts.spec_design(body.idea, body.requirements)
+        system, user = prompts.spec_design(body.idea, body.requirements, body.feedback, body.current)
     else:  # tasks
-        system, user = prompts.spec_tasks(body.idea, body.requirements, body.design)
+        system, user = prompts.spec_tasks(body.idea, body.requirements, body.design, body.feedback, body.current)
     return stream_response(system, user)
 
 

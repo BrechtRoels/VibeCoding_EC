@@ -131,8 +131,14 @@ def steering_block() -> str:
     return "\n".join(f"===== .kiro/steering/{name} =====\n{body}" for name, body in STEERING.items())
 
 
-def spec_requirements(idea: str) -> tuple[str, str]:
-    system = (
+_REVISE = (
+    " You are REVISING the existing file per the user's update below: apply their change, keep "
+    "everything else intact, and return the FULL updated file in the same format."
+)
+
+
+def spec_requirements(idea: str, feedback: str = "", current: str = "") -> tuple[str, str]:
+    base = (
         "You are Kiro's Requirements phase. Produce `.kiro/specs/<feature>/requirements.md`, "
         "incorporating the project steering context below.\n"
         "# Requirements\n## Introduction — one paragraph.\n"
@@ -143,15 +149,19 @@ def spec_requirements(idea: str) -> tuple[str, str]:
         "- WHEN <trigger> THE SYSTEM SHALL <response>\n"
         "- WHILE <state> THE SYSTEM SHALL <response>\n"
         "- IF <condition> THEN THE SYSTEM SHALL <response>\n"
-        "Produce EXACTLY 2 requirements (R1 and R2) — pick the two most essential capabilities so the "
-        "spec stays easy to follow in a workshop. Be precise and testable. Scope to a single "
-        "self-contained HTML page. " + _SPEC_MD_RULES + "\n\n" + steering_block()
+        "Be precise and testable. Scope to a single self-contained HTML page. " + _SPEC_MD_RULES
     )
-    return system, f"App idea: {idea}\n\nWrite requirements.md."
+    if feedback:
+        system = base + _REVISE + " Keep the spec focused (2-4 requirements).\n\n" + steering_block()
+        user = f"App idea: {idea}\n\n=== current requirements.md ===\n{current}\n\nUser's update: {feedback}\n\nReturn the full revised requirements.md."
+    else:
+        system = base + " Produce EXACTLY 2 requirements (R1 and R2) — the two most essential capabilities, to keep the spec easy to follow in a workshop.\n\n" + steering_block()
+        user = f"App idea: {idea}\n\nWrite requirements.md."
+    return system, user
 
 
-def spec_design(idea: str, requirements: str) -> tuple[str, str]:
-    system = (
+def spec_design(idea: str, requirements: str, feedback: str = "", current: str = "") -> tuple[str, str]:
+    base = (
         "You are Kiro's Design phase. Produce `.kiro/specs/<feature>/design.md`: the technical design "
         "that satisfies the approved requirements, honoring the steering context.\n"
         "# Design\n## Overview — one paragraph.\n"
@@ -160,14 +170,21 @@ def spec_design(idea: str, requirements: str) -> tuple[str, str]:
         "## Components — each UI/logic component, mapped to requirement ids (R<n>).\n"
         "## Data Flow — how a user action moves through the system (a short numbered sequence).\n"
         "## Traceability — a table mapping each R<n> to where it is handled.\n" + _SPEC_MD_RULES
-        + "\n\n" + steering_block()
     )
-    user = f"App idea: {idea}\n\n=== requirements.md ===\n{requirements}\n\nWrite design.md."
+    if feedback:
+        system = base + _REVISE + "\n\n" + steering_block()
+        user = (
+            f"App idea: {idea}\n\n=== requirements.md ===\n{requirements}\n\n"
+            f"=== current design.md ===\n{current}\n\nUser's update: {feedback}\n\nReturn the full revised design.md."
+        )
+    else:
+        system = base + "\n\n" + steering_block()
+        user = f"App idea: {idea}\n\n=== requirements.md ===\n{requirements}\n\nWrite design.md."
     return system, user
 
 
-def spec_tasks(idea: str, requirements: str, design: str) -> tuple[str, str]:
-    system = (
+def spec_tasks(idea: str, requirements: str, design: str, feedback: str = "", current: str = "") -> tuple[str, str]:
+    base = (
         "You are Kiro's Implementation Planning phase. Produce `.kiro/specs/<feature>/tasks.md`: a TIGHT, "
         "ordered plan. Use a checkbox list. Each task on ONE line in EXACTLY this shape:\n"
         "- [ ] T<n> (R<ids>): <imperative coding task>\n"
@@ -176,10 +193,13 @@ def spec_tasks(idea: str, requirements: str, design: str) -> tuple[str, str]:
         "into tiny steps (e.g. 'scaffold + layout', 'core CRUD + persistence', 'summary/visuals', 'polish'). "
         "Start the file with `# Tasks`. " + _SPEC_MD_RULES
     )
-    user = (
-        f"App idea: {idea}\n\n=== requirements.md ===\n{requirements}\n\n"
-        f"=== design.md ===\n{design}\n\nWrite tasks.md."
-    )
+    ctx = f"App idea: {idea}\n\n=== requirements.md ===\n{requirements}\n\n=== design.md ===\n{design}\n\n"
+    if feedback:
+        system = base + _REVISE
+        user = ctx + f"=== current tasks.md ===\n{current}\n\nUser's update: {feedback}\n\nReturn the full revised tasks.md."
+    else:
+        system = base
+        user = ctx + "Write tasks.md."
     return system, user
 
 

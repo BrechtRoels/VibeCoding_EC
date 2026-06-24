@@ -123,27 +123,51 @@ export function SpecMode({ onReset }: { onReset?: () => void }) {
     : "";
   const editorStreaming = fileStatus[activeFile] === "writing";
 
-  async function genDoc(kind: DocKey, ctx: Partial<Record<DocKey, string>>, theIdea: string): Promise<string> {
+  async function genDoc(
+    kind: DocKey,
+    ctx: Partial<Record<DocKey, string>>,
+    theIdea: string,
+    feedback = "",
+    current = ""
+  ): Promise<string> {
     setFile(FILE_OF[kind], "writing");
     setActiveFile(FILE_OF[kind]);
-    const mid = push({ role: "system", kind: "start", text: `Kiro · writing ${FILE_OF[kind]}`, streaming: true });
+    const verb = feedback ? "updating" : "writing";
+    const mid = push({ role: "system", kind: "start", text: `Kiro · ${verb} ${FILE_OF[kind]}`, streaming: true });
     const full = await streamOnce(
       "/api/spec/doc",
-      { kind, idea: theIdea, requirements: ctx.requirements ?? "", design: ctx.design ?? "" },
+      { kind, idea: theIdea, requirements: ctx.requirements ?? "", design: ctx.design ?? "", feedback, current },
       (t) => setDocs((d) => ({ ...d, [kind]: t }))
     );
     const clean = full.trim();
     setDocs((d) => ({ ...d, [kind]: clean }));
     setFile(FILE_OF[kind], "ready");
-    update(mid, { kind: "done", streaming: false, text: `Kiro · ${FILE_OF[kind]} ready` });
+    update(mid, { kind: "done", streaming: false, text: `Kiro · ${FILE_OF[kind]} ${feedback ? "updated" : "ready"}` });
     return clean;
+  }
+
+  // Apply a typed change to the doc currently awaiting approval, then re-present it.
+  async function refineDoc(kind: DocKey, feedback: string) {
+    if (busy) return;
+    setBusy(true);
+    setGate(null);
+    push({ role: "user", author: "You", text: feedback });
+    try {
+      const ctx = { requirements: docs.requirements, design: docs.design };
+      await genDoc(kind, ctx, idea, feedback, docs[kind]);
+      gatePrompt(kind);
+    } catch (e) {
+      fail(e);
+    } finally {
+      setBusy(false);
+    }
   }
 
   function gatePrompt(kind: DocKey) {
     push({
       role: "agent",
       author: "Kiro",
-      text: `${FILE_OF[kind]} is ready for review. Edit it if you like, then approve to continue to ${NEXT_LABEL[kind]} — or regenerate it.`,
+      text: `${FILE_OF[kind]} is ready. Review it — type a change here (e.g. "add a requirement for export") or edit the file directly. Then Approve to continue to ${NEXT_LABEL[kind]}, or Regenerate.`,
     });
     setGate(kind);
   }
@@ -307,8 +331,13 @@ export function SpecMode({ onReset }: { onReset?: () => void }) {
 
   function submit() {
     const text = input.trim();
-    if (!text || busy || gate) return;
+    if (!text || busy) return;
     setInput("");
+    if (gate) {
+      // typed change to the doc under review
+      refineDoc(gate, text);
+      return;
+    }
     if (phase === "idle") {
       const s = slugify(text);
       setSlug(s);
@@ -386,16 +415,16 @@ export function SpecMode({ onReset }: { onReset?: () => void }) {
         value: input,
         onChange: setInput,
         onSubmit: submit,
-        disabled: busy || gate !== null,
+        disabled: busy,
         placeholder:
           gate !== null
-            ? "Review the file, then Approve / Regenerate above…"
+            ? `Type a change to ${FILE_OF[gate]} — or use Approve / Regenerate above…`
             : busy
             ? "Kiro is working…"
             : phase === "done"
             ? "Request a change — it loops back through the spec…"
             : "Describe the app to spec out…",
-        sendLabel: phase === "idle" ? "Start spec" : phase === "done" ? "Update spec" : "…",
+        sendLabel: busy ? "…" : gate !== null ? "Update" : phase === "idle" ? "Start spec" : phase === "done" ? "Update spec" : "…",
         actions: actions.length ? <>{actions}</> : undefined,
       }}
     />
