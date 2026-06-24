@@ -4,6 +4,7 @@ import { SpecMode } from "./modes/SpecMode";
 import { HarnessMode } from "./modes/HarnessMode";
 import { Login } from "./components/Login";
 import { CodeGlyph } from "./components/CodeGlyph";
+import { InfoModal } from "./components/InfoModal";
 import { fetchEpoch } from "./lib/session";
 
 type Mode = "vibe" | "spec" | "harness";
@@ -27,6 +28,7 @@ const MODE_LABEL: Record<Mode, string> = {
 export default function App() {
   const [mode, setMode] = useState<Mode>("vibe");
   const [resetN, setResetN] = useState<Record<Mode, number>>({ vibe: 0, spec: 0, harness: 0 });
+  const [info, setInfo] = useState(false);
   const [authed, setAuthed] = useState(() => sessionStorage.getItem(AUTH_KEY) === "1");
 
   // Poll the shared session epoch; when the host starts a fresh session, log out,
@@ -92,11 +94,20 @@ export default function App() {
       </nav>
 
       <div className="app-topright">
+        <button className="info-btn" onClick={() => setInfo(true)} title="What is this?" aria-label="About this app">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" />
+            <line x1="12" y1="11" x2="12" y2="16.5" />
+            <circle cx="12" cy="7.6" r="0.9" fill="currentColor" stroke="none" />
+          </svg>
+        </button>
         <div className="app-env">
           <span className="env-dot" />
           PwC GenAI · Opus
         </div>
       </div>
+
+      <InfoModal open={info} onClose={() => setInfo(false)} />
 
       <main className="main-fs">
         {mode === "vibe" && <VibeMode key={`vibe-${resetN.vibe}`} onReset={() => resetMode("vibe")} />}
