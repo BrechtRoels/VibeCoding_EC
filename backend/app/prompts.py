@@ -143,8 +143,9 @@ def spec_requirements(idea: str) -> tuple[str, str]:
         "- WHEN <trigger> THE SYSTEM SHALL <response>\n"
         "- WHILE <state> THE SYSTEM SHALL <response>\n"
         "- IF <condition> THEN THE SYSTEM SHALL <response>\n"
-        "Be precise and testable. Scope to a single self-contained HTML page. " + _SPEC_MD_RULES
-        + "\n\n" + steering_block()
+        "Produce EXACTLY 2 requirements (R1 and R2) — pick the two most essential capabilities so the "
+        "spec stays easy to follow in a workshop. Be precise and testable. Scope to a single "
+        "self-contained HTML page. " + _SPEC_MD_RULES + "\n\n" + steering_block()
     )
     return system, f"App idea: {idea}\n\nWrite requirements.md."
 
