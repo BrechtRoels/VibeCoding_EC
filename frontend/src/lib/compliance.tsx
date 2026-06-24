@@ -66,39 +66,72 @@ export async function submitForApproval(opts: {
         ? "✅ Approved automatically — the harness enforces these compliance rules on every build, so it ships as-is."
         : `✅ Approved — this build passes the compliance track on attempt ${attempt}. It's cleared to ship.`
       : `❌ Not approved — ${fails} item(s) must be fixed before this can ship. Address them and submit again.`,
-    node: complianceGateNode(data.results),
+    node: complianceGateNode(data.results, data.approved),
   });
   return data.approved;
 }
 
-/** Chat node rendering compliance results grouped by category (reuses .cm-issue/.sev). */
-export function complianceGateNode(results: ComplianceResult[]): ReactNode {
+/** Fancy chat card rendering the compliance verdict: status badge, score bar, grouped rules. */
+export function complianceGateNode(results: ComplianceResult[], approved: boolean): ReactNode {
   const order = ["security", "privacy", "data", "branding"];
   const cats = Array.from(new Set(results.map((r) => r.category))).sort(
     (a, b) => order.indexOf(a) - order.indexOf(b)
   );
+  const passed = results.filter((r) => r.status === "pass").length;
+  const total = results.length;
+  const mustFix = results.filter((r) => r.status === "fail" && r.severity === "error").length;
+  const warns = results.filter((r) => r.status === "fail" && r.severity === "warn").length;
+  const pct = total ? Math.round((passed / total) * 100) : 0;
+
+  const sub = approved
+    ? warns > 0
+      ? `All required checks passed · ${warns} advisory note${warns > 1 ? "s" : ""}`
+      : "All checks passed — cleared to ship"
+    : `${mustFix} blocking issue${mustFix > 1 ? "s" : ""} must be fixed before this can ship`;
+
   return (
-    <div>
-      {cats.map((cat) => (
-        <div key={cat} style={{ marginBottom: 6 }}>
-          <div className="id" style={{ textTransform: "uppercase", letterSpacing: 0.4, opacity: 0.7, margin: "4px 0 2px" }}>
-            {CATEGORY_LABEL[cat] ?? cat}
-          </div>
-          {results
-            .filter((r) => r.category === cat)
-            .map((r, i) => (
-              <div className="cm-issue" key={i}>
-                <span className={`sev ${r.status === "pass" ? "pass" : r.severity === "error" ? "high" : "medium"}`}>
-                  {r.status === "pass" ? "pass" : r.severity === "error" ? "must fix" : "review"}
-                </span>
-                <div style={{ flex: 1 }}>
-                  <div className="it" style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: 11.5 }}>{r.rule}</div>
-                  <div className="id">{r.detail}</div>
-                </div>
-              </div>
-            ))}
+    <div className="comp-card">
+      <div className={`comp-head ${approved ? "ok" : "bad"}`}>
+        <span className={`comp-badge ${approved ? "ok" : "bad"}`}>{approved ? "✓" : "✕"}</span>
+        <div style={{ minWidth: 0 }}>
+          <div className="comp-title">{approved ? "Compliance approved" : "Changes required"}</div>
+          <div className="comp-sub">{sub}</div>
         </div>
-      ))}
+        <div className="comp-score">
+          <span className="cs-num">{passed}/{total} passed</span>
+          <span className="comp-bar"><i className={approved ? "ok" : "bad"} style={{ width: `${pct}%` }} /></span>
+        </div>
+      </div>
+      <div className="comp-body">
+        {cats.map((cat) => {
+          const rows = results.filter((r) => r.category === cat);
+          const ok = rows.filter((r) => r.status === "pass").length;
+          return (
+            <div className="comp-cat" key={cat}>
+              <div className="comp-cat-h">
+                <span>{CATEGORY_LABEL[cat] ?? cat}</span>
+                <span className="ct-count">{ok}/{rows.length}</span>
+                <span className="ct-rule" />
+              </div>
+              {rows.map((r, i) => {
+                const kind = r.status === "pass" ? "pass" : r.severity === "error" ? "fail" : "warn";
+                const tag = r.status === "pass" ? "pass" : r.severity === "error" ? "must fix" : "review";
+                const glyph = kind === "pass" ? "✓" : kind === "fail" ? "✕" : "!";
+                return (
+                  <div className="comp-row" key={i}>
+                    <span className={`comp-ico ${kind}`}>{glyph}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div className="comp-rule">{r.rule}</div>
+                      <div className="comp-detail">{r.detail}</div>
+                    </div>
+                    <span className={`comp-tag ${kind}`}>{tag}</span>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
