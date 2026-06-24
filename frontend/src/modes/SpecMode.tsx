@@ -37,7 +37,14 @@ const INTRO: ChatMsg[] = [
     role: "agent",
     author: "Kiro",
     text:
-      "Spec-driven, Kiro-style. Describe a feature and I'll write requirements.md (EARS), then — with your approval at each phase — design.md and tasks.md, then execute the tasks one by one into index.html. The .kiro/steering/ files give me always-on project context.",
+      "Spec-driven development captures intent as reviewable artifacts before any code is written, so the result is traceable, consistent, and easy to change later. To start, the .kiro/steering/ folder holds always-on project context — product principles, the tech stack, and structure conventions. Because steering applies to every build, each spec only has to describe the feature itself, not the standing rules. That keeps specs short and guarantees every app comes out consistent.",
+  },
+  {
+    id: "intro2",
+    role: "agent",
+    author: "Kiro",
+    text:
+      "Describe a feature and I'll work through four phases, pausing for your approval at each: requirements.md (testable EARS criteria) → design.md (architecture & data model) → tasks.md (an ordered plan) → implementation, executed task by task into index.html and then verified against the spec. The spec is the single source of truth — edit any file and the downstream regenerates.",
   },
 ];
 
