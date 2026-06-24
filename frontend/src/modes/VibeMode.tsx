@@ -4,6 +4,7 @@ import { GallerySubmit } from "../components/GallerySubmit";
 import { useStream, cleanHtml } from "../lib/useStream";
 import { streamOnce } from "../lib/streamOnce";
 import { loadSnap, saveSnap, sanitizeMessages } from "../lib/persist";
+import { submitForApproval } from "../lib/compliance";
 
 type Version = { html: string; label: string };
 
@@ -27,6 +28,8 @@ export function VibeMode({ onReset }: { onReset?: () => void }) {
   const [busy, setBusy] = useState(false);
   const [previewSig, setPreviewSig] = useState(0);
   const [messages, setMessages] = useState<ChatMsg[]>(snap.messages ?? INTRO);
+  const [reviewAttempts, setReviewAttempts] = useState<number>(snap.reviewAttempts ?? 0);
+  const [approved, setApproved] = useState<boolean>(snap.approved ?? false);
   const gen = useStream();
   const idc = useRef(0);
   const mountId = useRef(Math.random().toString(36).slice(2, 7));
@@ -37,8 +40,8 @@ export function VibeMode({ onReset }: { onReset?: () => void }) {
 
   // Persist progress so a reload restores it.
   useEffect(() => {
-    saveSnap(SNAP, { idea, versions, view, activeFile, messages: sanitizeMessages(messages) });
-  }, [idea, versions, view, activeFile, messages]);
+    saveSnap(SNAP, { idea, versions, view, activeFile, reviewAttempts, approved, messages: sanitizeMessages(messages) });
+  }, [idea, versions, view, activeFile, reviewAttempts, approved, messages]);
   const push = (m: Omit<ChatMsg, "id">) => {
     const id = nid();
     setMessages((arr) => [...arr, { id, ...m }]);
@@ -68,6 +71,7 @@ export function VibeMode({ onReset }: { onReset?: () => void }) {
       return next;
     });
     setActiveFile("index.html");
+    setApproved(false); // a new build invalidates any prior approval
   }
 
   async function turn(userText: string, first: boolean) {
@@ -96,6 +100,20 @@ export function VibeMode({ onReset }: { onReset?: () => void }) {
     } catch (e) {
       update(sid, { kind: "error", streaming: false, text: "generation interrupted" });
       push({ role: "agent", author: "Builder Agent", text: (e as Error).message || "Something went wrong — please try again." });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function submitApproval() {
+    const html = latest?.html;
+    if (!html || busy) return;
+    setBusy(true);
+    const n = reviewAttempts + 1;
+    setReviewAttempts(n);
+    try {
+      const ok = await submitForApproval({ html, push, update, attempt: n });
+      if (ok) setApproved(true);
     } finally {
       setBusy(false);
     }
@@ -138,10 +156,19 @@ export function VibeMode({ onReset }: { onReset?: () => void }) {
       messages={messages}
       titleActions={
         <>
-          {versions.length > 0 ? (
+          {approved ? (
+            <span className="pill accent">✓ approved · attempt {reviewAttempts}</span>
+          ) : reviewAttempts > 0 ? (
+            <span className="pill">review attempt {reviewAttempts}</span>
+          ) : versions.length > 0 ? (
             <span className="pill accent">iteration {versions.length}</span>
           ) : (
             <span className="pill">vibecoding</span>
+          )}
+          {latest && (
+            <button className="btn-secondary" onClick={submitApproval} disabled={busy || approved}>
+              {approved ? "Approved ✓" : "Submit for approval"}
+            </button>
           )}
           <GallerySubmit mode="vibe" title={idea} html={latest?.html ?? ""} />
         </>
