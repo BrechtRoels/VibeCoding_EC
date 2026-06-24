@@ -119,27 +119,60 @@ When generating code in this repo, follow the locked harness:
 These are validated by `house-lint`; violations fail the build.
 """.strip()
 
-HOUSE_LINT_JSON = """
+CLAUDE_MD = """
+# CLAUDE.md
+
+Project memory for Claude Code. This repository ships behind a locked engineering
+harness — follow it on every change. It is enforced by the lint gate (`house`
+ruleset) in pre-commit and CI, so non-compliant code cannot merge.
+
+## Rules
+- One self-contained `index.html`: inline CSS + vanilla JS. No frameworks, no build
+  step, no external `<script src>` or `<link rel=stylesheet>` (web fonts excepted).
+- Use ONLY the tokens and classes from `design-system.css` (`var(--c-*)`); never
+  hardcode colors.
+- Use the locked layout shell from `architecture.md` (`app-header` / `app-sidebar` /
+  `app-main`); compose UI from `.card`, `.btn-primary`, `.btn-secondary`.
+""".strip()
+
+ESLINTRC_JSON = """
 {
-  "extends": "house/recommended",
-  "enforcedBy": ["pre-commit", "ci"],
+  "root": true,
+  "extends": ["house/recommended"],
+  "plugins": ["house"],
   "rules": {
-    "design-system/tokens-present": "error",
-    "architecture/layout-shell": "error",
-    "self-contained/no-external-stylesheets": "error",
-    "self-contained/no-cdn-scripts": "error",
-    "design-system/locked-button-classes": "warn",
-    "design-system/no-hardcoded-colors": "warn"
+    "house/design-tokens-only": "error",
+    "house/layout-shell": "error",
+    "house/no-external-stylesheets": "error",
+    "house/no-cdn-scripts": "error",
+    "house/locked-button-classes": "warn",
+    "house/no-hardcoded-colors": "warn"
   }
 }
 """.strip()
 
+EDITORCONFIG = """
+# .editorconfig — house formatting (enforced)
+root = true
+
+[*]
+charset = utf-8
+indent_style = space
+indent_size = 2
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+""".strip()
+
 # Files surfaced to the UI (the locked/ folder) and injected into the prompt.
+# Standard agent-config + lint/format filenames used across the major AI coding tools.
 HARNESS_FILES = [
     {"name": "AGENTS.md", "lang": "markdown", "content": AGENTS_MD},
+    {"name": "CLAUDE.md", "lang": "markdown", "content": CLAUDE_MD},
     {"name": ".cursor/rules/house-style.mdc", "lang": "markdown", "content": CURSOR_RULES_MDC},
     {"name": ".github/copilot-instructions.md", "lang": "markdown", "content": COPILOT_INSTRUCTIONS_MD},
-    {"name": "house-lint.json", "lang": "json", "content": HOUSE_LINT_JSON},
+    {"name": ".eslintrc.json", "lang": "json", "content": ESLINTRC_JSON},
+    {"name": ".editorconfig", "lang": "ini", "content": EDITORCONFIG},
     {"name": "design-system.css", "lang": "css", "content": HARNESS_CSS},
     {"name": "architecture.md", "lang": "markdown", "content": HARNESS_CONTRACT},
 ]

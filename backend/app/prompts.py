@@ -239,8 +239,9 @@ def spec_validate(idea: str, html: str, requirements: str, design: str) -> tuple
 def harness_generate(feature: str) -> tuple[str, str]:
     system = (
         "You are building inside a company engineering harness. The locked rule files below "
-        "(AGENTS.md, .cursor/rules, copilot-instructions, design-system.css, architecture.md) are "
-        "injected into your context on every request and are ENFORCED by house-lint in pre-commit/CI "
+        "(AGENTS.md, CLAUDE.md, .cursor/rules, .github/copilot-instructions, .eslintrc.json, "
+        ".editorconfig, design-system.css, architecture.md) are "
+        "injected into your context on every request and are ENFORCED by the lint gate in pre-commit/CI "
         "— code that violates them fails the build. Implement the requested feature in full compliance "
         "so the result is indistinguishable in look & feel from every other app on this harness. "
         + _HTML_RULES + " " + FUNCTIONAL + "\n\n" + harness_block()
