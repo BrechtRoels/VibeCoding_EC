@@ -56,6 +56,8 @@ type Props = {
   onReset?: () => void;
   /** Bump this when a build completes to auto-open the preview full screen. */
   previewSignal?: number;
+  /** Optional hover explanation per explorer folder (keyed by group name). */
+  folderInfo?: Record<string, string>;
 };
 
 const GLYPH: Record<NonNullable<ChatMsg["kind"]>, string> = {
@@ -221,7 +223,21 @@ export function Ide(props: Props) {
           {[...groups.entries()].map(([g, fs]) => (
             <div key={g || "root"}>
               {g ? (
-                <div className="exp-folder">📂 {g}</div>
+                <div className="exp-folder">
+                  <span>📂 {g}</span>
+                  {props.folderInfo?.[g] && (
+                    <>
+                      <span className="exp-info" tabIndex={0} aria-label="About this folder">
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <circle cx="12" cy="12" r="9" />
+                          <line x1="12" y1="11" x2="12" y2="16.5" />
+                          <circle cx="12" cy="7.6" r="0.9" fill="currentColor" stroke="none" />
+                        </svg>
+                      </span>
+                      <span className="exp-tip">{props.folderInfo[g]}</span>
+                    </>
+                  )}
+                </div>
               ) : (
                 <div className="exp-section">Explorer</div>
               )}

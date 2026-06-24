@@ -31,13 +31,18 @@ function flipDone(md: string, id: string): string {
 }
 
 const SNAP = "twtb:spec";
+const STEERING_INFO =
+  "Always-on project context — product principles, the tech stack, and structure conventions. " +
+  "It applies to every build, so each spec only has to describe the feature itself. That keeps specs " +
+  "short and guarantees every app comes out consistent.";
+
 const INTRO: ChatMsg[] = [
   {
     id: "intro",
     role: "agent",
     author: "Kiro",
     text:
-      "Spec-driven development captures intent as reviewable artifacts before any code is written, so the result is traceable, consistent, and easy to change later. To start, the .kiro/steering/ folder holds always-on project context — product principles, the tech stack, and structure conventions. Because steering applies to every build, each spec only has to describe the feature itself, not the standing rules. That keeps specs short and guarantees every app comes out consistent.",
+      "Spec-driven development captures intent as reviewable artifacts before any code is written, so the result is traceable, consistent, and easy to change later.",
   },
   {
     id: "intro2",
@@ -385,6 +390,7 @@ export function SpecMode({ onReset }: { onReset?: () => void }) {
       hideUnwritten
       onReset={onReset}
       previewSignal={previewSig}
+      folderInfo={{ ".kiro/steering/": STEERING_INFO }}
       files={files}
       activeFile={activeFile}
       onSelectFile={setActiveFile}
