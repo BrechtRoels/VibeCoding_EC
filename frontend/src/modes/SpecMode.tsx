@@ -67,6 +67,7 @@ export function SpecMode({ onReset }: { onReset?: () => void }) {
   const [busy, setBusy] = useState(false);
   const [building, setBuilding] = useState(false);
   const [previewSig, setPreviewSig] = useState(0);
+  const [focusSig, setFocusSig] = useState(0);
   const [gate, setGate] = useState<DocKey | null>(snap.gate ?? null);
   const [phase, setPhase] = useState<"idle" | "requirements" | "design" | "tasks" | "execute" | "done">(snap.phase ?? "idle");
   const [messages, setMessages] = useState<ChatMsg[]>(snap.messages ?? INTRO);
@@ -172,9 +173,10 @@ export function SpecMode({ onReset }: { onReset?: () => void }) {
     push({
       role: "agent",
       author: "Kiro",
-      text: `${FILE_OF[kind]} is ready. Review it — type a change here (e.g. "add a requirement for export") or edit the file directly. Then Approve to continue to ${NEXT_LABEL[kind]}, or Regenerate.`,
+      text: `${FILE_OF[kind]} is ready for review. To change it, just type what you'd like here (e.g. "add a requirement for export") and send — I'll update it. When you're happy, click ✓ Approve to continue to ${NEXT_LABEL[kind]} (or ↻ Regenerate).`,
     });
     setGate(kind);
+    setFocusSig((s) => s + 1);
   }
 
   const MAX_TASKS = 5; // each task is a full Opus rebuild — cap to keep runs fast
@@ -390,6 +392,7 @@ export function SpecMode({ onReset }: { onReset?: () => void }) {
       hideUnwritten
       onReset={onReset}
       previewSignal={previewSig}
+      focusSignal={focusSig}
       folderInfo={{ ".kiro/steering/": STEERING_INFO }}
       files={files}
       activeFile={activeFile}

@@ -58,6 +58,8 @@ type Props = {
   previewSignal?: number;
   /** Optional hover explanation per explorer folder (keyed by group name). */
   folderInfo?: Record<string, string>;
+  /** Bump to move focus into the chat input (e.g. when a doc awaits review). */
+  focusSignal?: number;
 };
 
 const GLYPH: Record<NonNullable<ChatMsg["kind"]>, string> = {
@@ -163,6 +165,11 @@ export function Ide(props: Props) {
   const [view, setView] = useState<"code" | "preview">("code");
   const [autoFs, setAutoFs] = useState(false);
   const msgsRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (props.focusSignal) inputRef.current?.focus();
+  }, [props.focusSignal]);
 
   useEffect(() => {
     if (editor.streaming) setView("code");
@@ -317,6 +324,7 @@ export function Ide(props: Props) {
             {props.input.actions && <div className="ci-actions">{props.input.actions}</div>}
             <div className="ci-row">
               <textarea
+                ref={inputRef}
                 value={props.input.value}
                 placeholder={props.input.placeholder ?? "Message the agent…"}
                 onChange={(e) => props.input.onChange(e.target.value)}
