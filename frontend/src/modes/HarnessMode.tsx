@@ -30,6 +30,7 @@ export function HarnessMode({ onReset }: { onReset?: () => void }) {
   const [building, setBuilding] = useState(false);
   const [activeFile, setActiveFile] = useState<string>(snap.activeFile ?? "AGENTS.md");
   const [lastFeature, setLastFeature] = useState<string>(snap.lastFeature ?? "");
+  const [previewSig, setPreviewSig] = useState(0);
   const [messages, setMessages] = useState<ChatMsg[]>(snap.messages ?? INTRO);
 
   // Persist progress so a reload restores it.
@@ -147,6 +148,7 @@ export function HarnessMode({ onReset }: { onReset?: () => void }) {
       const clean = cleanHtml(full);
       setHtml(clean);
       setBuilding(false);
+      setPreviewSig((s) => s + 1); // build complete → auto-open full-screen preview
       update(aid, { streaming: false, text: (isRefine ? "Updated" : "Build done") + " — handing off to the house-lint gate to verify compliance." });
       await runGate(feature, clean, 0);
     } catch (e) {
@@ -160,6 +162,7 @@ export function HarnessMode({ onReset }: { onReset?: () => void }) {
       projectName="harness-app"
       chatTitle="Harness Chat"
       onReset={onReset}
+      previewSignal={previewSig}
       files={files}
       activeFile={activeFile}
       onSelectFile={setActiveFile}

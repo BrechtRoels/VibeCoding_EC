@@ -25,6 +25,7 @@ export function VibeMode({ onReset }: { onReset?: () => void }) {
   const [activeFile, setActiveFile] = useState<string>(snap.activeFile ?? "index.html");
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [previewSig, setPreviewSig] = useState(0);
   const [messages, setMessages] = useState<ChatMsg[]>(snap.messages ?? INTRO);
   const gen = useStream();
   const idc = useRef(0);
@@ -89,8 +90,9 @@ export function VibeMode({ onReset }: { onReset?: () => void }) {
       await gen.run(url, body, (full) => {
         commit(label, full);
         update(sid, { kind: "done", streaming: false, text: `index.html ready · ${label} (${full.length} chars)` });
-        push({ role: "agent", author: "Builder Agent", text: `Done! Open the Preview tab to try it. Want any changes?` });
+        push({ role: "agent", author: "Builder Agent", text: `Done! Want any changes?` });
       });
+      setPreviewSig((s) => s + 1); // build complete → auto-open full-screen preview
     } catch (e) {
       update(sid, { kind: "error", streaming: false, text: "generation interrupted" });
       push({ role: "agent", author: "Builder Agent", text: (e as Error).message || "Something went wrong — please try again." });
@@ -118,6 +120,7 @@ export function VibeMode({ onReset }: { onReset?: () => void }) {
       chatTitle="Vibe Chat"
       hideUnwritten
       onReset={onReset}
+      previewSignal={previewSig}
       files={files}
       activeFile={activeFile}
       onSelectFile={(n) => {

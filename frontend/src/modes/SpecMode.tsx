@@ -54,6 +54,7 @@ export function SpecMode({ onReset }: { onReset?: () => void }) {
   const [activeFile, setActiveFile] = useState<string>(snap.activeFile ?? "");
   const [busy, setBusy] = useState(false);
   const [building, setBuilding] = useState(false);
+  const [previewSig, setPreviewSig] = useState(0);
   const [gate, setGate] = useState<DocKey | null>(snap.gate ?? null);
   const [phase, setPhase] = useState<"idle" | "requirements" | "design" | "tasks" | "execute" | "done">(snap.phase ?? "idle");
   const [messages, setMessages] = useState<ChatMsg[]>(snap.messages ?? INTRO);
@@ -169,6 +170,7 @@ export function SpecMode({ onReset }: { onReset?: () => void }) {
     }
     setBuilding(false);
     setFile("index.html", "ready");
+    setPreviewSig((s) => s + 1); // all tasks done → auto-open full-screen preview
     await validate(theIdea, cur);
     setPhase("done");
     push({ role: "agent", author: "Kiro", text: "All tasks complete — open index.html › Preview to use the app. Want to change anything? Describe it and I'll loop back through the spec." });
@@ -346,6 +348,7 @@ export function SpecMode({ onReset }: { onReset?: () => void }) {
       chatTitle="Kiro Spec Workflow"
       hideUnwritten
       onReset={onReset}
+      previewSignal={previewSig}
       files={files}
       activeFile={activeFile}
       onSelectFile={setActiveFile}

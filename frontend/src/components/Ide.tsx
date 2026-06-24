@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Preview } from "./Preview";
+import { FullscreenPreview } from "./FullscreenPreview";
 
 export type FileStatus = "pending" | "writing" | "ready" | "locked";
 
@@ -53,6 +54,8 @@ type Props = {
   titleActions?: ReactNode;
   /** Optional "start from blank" handler — renders a Reset button in the titlebar. */
   onReset?: () => void;
+  /** Bump this when a build completes to auto-open the preview full screen. */
+  previewSignal?: number;
 };
 
 const GLYPH: Record<NonNullable<ChatMsg["kind"]>, string> = {
@@ -156,11 +159,19 @@ function CodeView({ editor }: { editor: EditorState }) {
 export function Ide(props: Props) {
   const { editor, previewHtml } = props;
   const [view, setView] = useState<"code" | "preview">("code");
+  const [autoFs, setAutoFs] = useState(false);
   const msgsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (editor.streaming) setView("code");
   }, [editor.streaming]);
+
+  // When a build completes (parent bumps previewSignal), auto-open the finished
+  // app full screen so the room sees the result immediately.
+  useEffect(() => {
+    if (props.previewSignal && previewHtml) setAutoFs(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [props.previewSignal]);
 
   useEffect(() => {
     msgsRef.current?.scrollTo({ top: msgsRef.current.scrollHeight, behavior: "smooth" });
@@ -311,6 +322,13 @@ export function Ide(props: Props) {
           </div>
         </div>
       </div>
+
+      <FullscreenPreview
+        html={previewHtml ?? ""}
+        open={autoFs}
+        onClose={() => setAutoFs(false)}
+        title={props.projectName}
+      />
     </div>
   );
 }
