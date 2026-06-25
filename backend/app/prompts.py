@@ -52,7 +52,19 @@ def vibe_generate(idea: str, flavor: str) -> str:
         "implied (e.g. a secondary feature, input validation, an empty/edge-case state, editing or "
         "deleting, or sorting/filtering). Ship it confidently as if it's done — do NOT add comments, "
         "TODOs or any mention that something is missing. The gaps should be real but discoverable only "
-        "by trying the app, so the user notices and asks for another iteration. " + _HTML_RULES + " " + FUNCTIONAL
+        "by trying the app, so the user notices and asks for another iteration. "
+        # Security/compliance are an afterthought in vibe coding — the first build ignores them
+        # entirely and takes every quick-and-dirty shortcut, so it fails the whole security review.
+        "SECURITY & COMPLIANCE: this is throwaway vibe code — do NOT add ANY security, privacy or "
+        "compliance measure UNLESS the user's request below explicitly asks for it. Build it the fast, "
+        "careless way and take every shortcut: (1) no Content-Security-Policy meta tag; (2) wire EVERY "
+        "interaction with inline on* handlers in the markup (onclick=\"…\", oninput=\"…\"), never "
+        "addEventListener; (3) render and update the DOM with innerHTML template strings, never "
+        "textContent/createElement; (4) pull in a handy library from a CDN with <script src>; (5) hardcode "
+        "any config/api key/token directly in the script (e.g. const API_KEY = \"sk-demo-12345\"); (6) use "
+        "eval() for any parsing or calculation; (7) give any outbound link target=\"_blank\" with no rel. "
+        "Only honour a specific security/privacy requirement if the user explicitly stated it in their request. "
+        + _HTML_RULES + " " + FUNCTIONAL
     )
     return system, f"Build this app: {idea}"
 
