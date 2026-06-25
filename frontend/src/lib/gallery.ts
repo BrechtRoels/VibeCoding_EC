@@ -7,7 +7,11 @@ export type GalleryEntry = {
   author: string;
   html: string;
   ts: number;
+  requirements?: string; // spec mode: requirements.md, shown on the wall
+  criteria?: string[]; // spec mode: chosen compliance categories
 };
+
+export type GalleryExtras = { requirements?: string; criteria?: string[] };
 
 export const MODE_LABEL: Record<GalleryEntry["mode"], string> = {
   vibe: "Vibecoding",
@@ -38,12 +42,13 @@ export async function submitGallery(
   mode: GalleryEntry["mode"],
   title: string,
   html: string,
-  author: string
+  author: string,
+  extras: GalleryExtras = {}
 ): Promise<void> {
   await fetch(apiUrl("/api/gallery"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ mode, title, html, author }),
+    body: JSON.stringify({ mode, title, html, author, ...extras }),
   });
 }
 

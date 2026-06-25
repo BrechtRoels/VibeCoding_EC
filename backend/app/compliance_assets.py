@@ -188,23 +188,27 @@ def run_compliance_check(html: str) -> list[dict]:
     return results
 
 
-def compliance_block() -> str:
-    """Human-readable summary of the compliance rules, for prompt injection.
+# Category metadata — keys + display labels for the picker and prompt sections.
+CATEGORIES = [
+    {"key": "security", "label": "Security"},
+    {"key": "privacy", "label": "Privacy / legal"},
+    {"key": "data", "label": "Data storage"},
+    {"key": "branding", "label": "Branding"},
+]
+CATEGORY_KEYS = [c["key"] for c in CATEGORIES]
 
-    Injected into the spec + harness builders so their output satisfies the
-    gate by construction. (Vibe deliberately does NOT get this.)
-    """
-    csp = (
-        "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'self'; "
-        "script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
-        "font-src https://fonts.gstatic.com; img-src 'self' data:\">"
-    )
-    lines = [
-        "The output MUST pass the company COMPLIANCE review. Build it to satisfy every rule below:",
-        "",
+_CSP_META = (
+    "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'self'; "
+    "script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+    "font-src https://fonts.gstatic.com; img-src 'self' data:\">"
+)
+
+# How to satisfy each category's rules, for prompt injection.
+_COMPLIANCE_GUIDANCE = {
+    "security": [
         "SECURITY",
         "- In <head>, include this exact Content-Security-Policy meta tag (keep it as-is so inline CSS/JS still work):",
-        f"    {csp}",
+        f"    {_CSP_META}",
         "- Self-contained only: no external/CDN <script src> (web fonts are fine). Vanilla JS.",
         "- Never embed API keys, tokens, passwords or secrets in the source.",
         "- Bind ALL events with addEventListener in a <script> at the end — NEVER use inline on* attributes "
@@ -213,17 +217,44 @@ def compliance_block() -> str:
         "or use document.write.",
         "- Any target=\"_blank\" link must also set rel=\"noopener\".",
         "- Do not use eval() or new Function().",
-        "",
+    ],
+    "privacy": [
         "PRIVACY / LEGAL",
         "- Include a <footer> with a copyright/disclaimer line (e.g. © <year> — all rights reserved).",
         "- Include a 'Privacy policy' link. No analytics, tracking pixels or third-party scripts.",
-        "",
+    ],
+    "data": [
         "DATA STORAGE",
         "- Never store sensitive fields (password, ssn, card, cvv, token) in localStorage/cookies in plaintext.",
         "- If you persist any data locally, tell the user (a short consent/cookie notice).",
-        "",
+    ],
+    "branding": [
         "BRANDING",
         "- Use ONLY the approved brand palette (orange #FD5108 family + the neutral greys); no stray hex colors.",
         "- Use the approved 'Inter' typeface for all text.",
-    ]
+    ],
+}
+
+
+def normalize_categories(categories: list[str] | None) -> list[str]:
+    """None → all categories; otherwise keep the given keys in canonical order."""
+    if categories is None:
+        return list(CATEGORY_KEYS)
+    return [k for k in CATEGORY_KEYS if k in categories]
+
+
+def compliance_block(categories: list[str] | None = None) -> str:
+    """Human-readable summary of the compliance rules, for prompt injection.
+
+    Injected into the spec + harness builders so their output satisfies the
+    gate by construction. (Vibe deliberately does NOT get this.) `categories`
+    restricts it to the participant's chosen compliance bar (spec mode).
+    """
+    keys = normalize_categories(categories)
+    if not keys:
+        return ""
+    lines = ["The output MUST pass the company COMPLIANCE review. Build it to satisfy every rule below:"]
+    for k in keys:
+        lines.append("")
+        lines.extend(_COMPLIANCE_GUIDANCE[k])
     return "\n".join(lines)

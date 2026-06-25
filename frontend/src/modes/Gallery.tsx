@@ -3,10 +3,48 @@ import { Preview } from "../components/Preview";
 import { CodeGlyph } from "../components/CodeGlyph";
 import { RefreshIcon } from "../components/RefreshIcon";
 import { fetchGallery, MODE_LABEL, type GalleryEntry } from "../lib/gallery";
+import { COMPLIANCE_CATEGORIES } from "../lib/compliance";
 import { resetSession } from "../lib/session";
 
 type Filter = "all" | "vibe" | "spec" | "harness";
 const ORDER: GalleryEntry["mode"][] = ["vibe", "spec", "harness"];
+const CRIT_LABEL: Record<string, string> = Object.fromEntries(COMPLIANCE_CATEGORIES.map((c) => [c.key, c.label]));
+
+function WallTile({ e }: { e: GalleryEntry }) {
+  const [showReq, setShowReq] = useState(false);
+  const hasReq = !!(e.requirements || e.criteria?.length);
+  return (
+    <div className="wall-tile">
+      <div className="wall-frame">
+        <Preview html={e.html} title={`${MODE_LABEL[e.mode]} · ${e.title}`} />
+      </div>
+      <div className="wall-meta">
+        <span className={`mode-badge m-${e.mode}`}>{MODE_LABEL[e.mode]}</span>
+        <span className="wall-tt" title={e.title}>{e.title}</span>
+        <span className="wall-by">{e.author}</span>
+      </div>
+      {hasReq && (
+        <div className="wall-req">
+          {!!e.criteria?.length && (
+            <div className="wall-req-crit">
+              {e.criteria.map((k) => (
+                <span className="pill accent" key={k}>{CRIT_LABEL[k] ?? k}</span>
+              ))}
+            </div>
+          )}
+          {!!e.requirements && (
+            <>
+              <button className="wall-req-toggle" onClick={() => setShowReq((s) => !s)}>
+                {showReq ? "▾ Hide requirements" : "▸ Show requirements"}
+              </button>
+              {showReq && <div className="wall-req-body">{e.requirements}</div>}
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function Gallery({ onClose }: { onClose: () => void }) {
   const [entries, setEntries] = useState<GalleryEntry[]>([]);
@@ -82,16 +120,7 @@ export function Gallery({ onClose }: { onClose: () => void }) {
               </h2>
               <div className="wall-grid">
                 {items.map((e) => (
-                  <div className="wall-tile" key={e.id}>
-                    <div className="wall-frame">
-                      <Preview html={e.html} title={`${MODE_LABEL[e.mode]} · ${e.title}`} />
-                    </div>
-                    <div className="wall-meta">
-                      <span className={`mode-badge m-${e.mode}`}>{MODE_LABEL[e.mode]}</span>
-                      <span className="wall-tt" title={e.title}>{e.title}</span>
-                      <span className="wall-by">{e.author}</span>
-                    </div>
-                  </div>
+                  <WallTile e={e} key={e.id} />
                 ))}
               </div>
             </section>

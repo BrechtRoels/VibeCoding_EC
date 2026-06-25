@@ -146,7 +146,7 @@ _REVISE = (
 )
 
 
-def spec_requirements(idea: str, feedback: str = "", current: str = "") -> tuple[str, str]:
+def spec_requirements(idea: str, feedback: str = "", current: str = "", compliance: list[str] | None = None) -> tuple[str, str]:
     base = (
         "You are Kiro's Requirements phase. Produce `.kiro/specs/<feature>/requirements.md`, "
         "incorporating the project steering context below.\n"
@@ -160,8 +160,8 @@ def spec_requirements(idea: str, feedback: str = "", current: str = "") -> tuple
         "- IF <condition> THEN THE SYSTEM SHALL <response>\n"
         "Be precise and testable. Scope to a single self-contained HTML page.\n"
         "Also add a final '## Compliance criteria' section turning the company compliance rules below "
-        "into testable acceptance criteria the app must meet (security, privacy, data storage, branding). "
-        + _SPEC_MD_RULES + "\n\n" + compliance_block()
+        "into testable acceptance criteria the app must meet. "
+        + _SPEC_MD_RULES + "\n\n" + compliance_block(compliance)
     )
     if feedback:
         system = base + _REVISE + " Keep the spec focused (2-4 requirements).\n\n" + steering_block()
@@ -172,7 +172,7 @@ def spec_requirements(idea: str, feedback: str = "", current: str = "") -> tuple
     return system, user
 
 
-def spec_design(idea: str, requirements: str, feedback: str = "", current: str = "") -> tuple[str, str]:
+def spec_design(idea: str, requirements: str, feedback: str = "", current: str = "", compliance: list[str] | None = None) -> tuple[str, str]:
     base = (
         "You are Kiro's Design phase. Produce `.kiro/specs/<feature>/design.md`: the technical design "
         "that satisfies the approved requirements, honoring the steering context.\n"
@@ -182,8 +182,8 @@ def spec_design(idea: str, requirements: str, feedback: str = "", current: str =
         "## Components — each UI/logic component, mapped to requirement ids (R<n>).\n"
         "## Data Flow — how a user action moves through the system (a short numbered sequence).\n"
         "## Traceability — a table mapping each R<n> to where it is handled.\n"
-        "## Compliance — how the design meets each compliance rule below (security, privacy, data storage, branding).\n"
-        + _SPEC_MD_RULES + "\n\n" + compliance_block()
+        "## Compliance — how the design meets each compliance rule below.\n"
+        + _SPEC_MD_RULES + "\n\n" + compliance_block(compliance)
     )
     if feedback:
         system = base + _REVISE + "\n\n" + steering_block()
@@ -217,14 +217,14 @@ def spec_tasks(idea: str, requirements: str, design: str, feedback: str = "", cu
     return system, user
 
 
-def spec_task(idea: str, design: str, tasks: str, current_html: str, task_id: str, task_text: str) -> tuple[str, str]:
+def spec_task(idea: str, design: str, tasks: str, current_html: str, task_id: str, task_text: str, compliance: list[str] | None = None) -> tuple[str, str]:
     """Execute ONE task from tasks.md, Kiro-style, on top of the current code."""
     system = (
         "You are Kiro executing ONE task from tasks.md. Implement ONLY the current task and integrate it "
         "into the existing index.html WITHOUT breaking or removing previously completed tasks. Return the "
         f"FULL updated self-contained HTML document. Add an HTML comment <!-- {task_id} done --> next to the "
         "code you add for this task. Follow design.md and the steering context exactly. "
-        + _HTML_RULES + " " + FUNCTIONAL + "\n\n" + steering_block() + "\n\n" + compliance_block()
+        + _HTML_RULES + " " + FUNCTIONAL + "\n\n" + steering_block() + "\n\n" + compliance_block(compliance)
     )
     cur = current_html.strip() or "(no code yet — this is the first task; create the initial document)"
     user = (

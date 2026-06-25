@@ -12,6 +12,8 @@ class SubmitBody(BaseModel):
     title: str
     html: str
     author: str | None = None
+    requirements: str | None = None  # spec mode: the requirements.md to show on the wall
+    criteria: list[str] | None = None  # spec mode: the chosen compliance categories
 
 
 @router.get("")
@@ -21,7 +23,9 @@ async def list_gallery():
 
 @router.post("")
 async def submit(body: SubmitBody):
-    entry = await gallery_store.add(body.mode, body.title, body.html, body.author)
+    entry = await gallery_store.add(
+        body.mode, body.title, body.html, body.author, body.requirements, body.criteria
+    )
     return {"id": entry["id"]}
 
 

@@ -12,19 +12,25 @@ export type ComplianceResult = {
 
 export type ComplianceReview = { approved: boolean; results: ComplianceResult[] };
 
-const CATEGORY_LABEL: Record<string, string> = {
-  security: "Security",
-  privacy: "Privacy / legal",
-  data: "Data storage",
-  branding: "Branding",
-};
+/** The compliance categories participants can pick as their bar (spec mode). */
+export const COMPLIANCE_CATEGORIES = [
+  { key: "security", label: "Security" },
+  { key: "privacy", label: "Privacy / legal" },
+  { key: "data", label: "Data storage" },
+  { key: "branding", label: "Branding" },
+] as const;
 
-/** Run the shared deterministic compliance gate against the current build. */
-export async function reviewCompliance(html: string): Promise<ComplianceReview> {
+const CATEGORY_LABEL: Record<string, string> = Object.fromEntries(
+  COMPLIANCE_CATEGORIES.map((c) => [c.key, c.label])
+);
+
+/** Run the shared deterministic compliance gate against the current build.
+ *  `categories` (spec mode) restricts enforcement to the participant's bar. */
+export async function reviewCompliance(html: string, categories?: string[]): Promise<ComplianceReview> {
   const res = await fetch(apiUrl("/api/compliance/review"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ html }),
+    body: JSON.stringify(categories ? { html, categories } : { html }),
   });
   if (!res.ok) throw new Error(`Compliance review failed (${res.status})`);
   return res.json();
@@ -42,12 +48,13 @@ export async function submitForApproval(opts: {
   update: (id: string, patch: Partial<ChatMsg>) => void;
   attempt: number; // the attempt number this submission represents (1-based)
   automatic?: boolean;
+  categories?: string[]; // spec mode: the participant's chosen compliance bar
 }): Promise<boolean> {
-  const { html, push, update, attempt, automatic } = opts;
+  const { html, push, update, attempt, automatic, categories } = opts;
   const sid = push({ role: "system", kind: "start", text: `Compliance · review #${attempt} running`, streaming: true });
   let data: ComplianceReview;
   try {
-    data = await reviewCompliance(html);
+    data = await reviewCompliance(html, categories);
   } catch (e) {
     update(sid, { kind: "error", streaming: false, text: (e as Error).message || "Compliance gate unavailable — try again." });
     return false;
