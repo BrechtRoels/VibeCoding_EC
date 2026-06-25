@@ -43,7 +43,7 @@ function ComplianceBrief() {
         <span className="cb-mark">⚖</span>
         <div className="cb-titles">
           <h2>Compliance requirements</h2>
-          <p>Spec-Driven won't add these for you — read them here and describe them in your spec, or approval fails.</p>
+          <p>Describe these in your spec — they aren't added automatically.</p>
         </div>
         <span className="cb-toggle">{open ? "▾ Hide" : "▸ Show"}</span>
       </button>

@@ -42,38 +42,38 @@ APPROVED_HEX = {
 # — which gets compliance_block() injected — satisfies every ERROR rule and so is
 # approved. Warnings never block approval; they just colour the card.
 COMPLIANCE_RULES = [
-    # --- security ---
+    # --- security ---  (short, classroom-readable lines)
     {"rule": "security/content-security-policy", "category": "security", "severity": "error",
-     "description": "A Content-Security-Policy <meta> tag must be declared in <head>."},
+     "description": "Add a Content-Security-Policy."},
     {"rule": "security/no-external-scripts", "category": "security", "severity": "error",
-     "description": "Self-contained — no external/CDN <script src> (web fonts excepted)."},
+     "description": "No outside scripts — keep it self-contained."},
     {"rule": "security/no-hardcoded-secrets", "category": "security", "severity": "error",
-     "description": "No API keys, tokens, passwords or secrets embedded in the source."},
+     "description": "No passwords or API keys in the code."},
     {"rule": "security/no-inline-event-handlers", "category": "security", "severity": "error",
-     "description": "No inline on* handlers (onclick=…) — bind events with addEventListener."},
+     "description": "No onclick in the HTML."},
     {"rule": "security/no-unsafe-html", "category": "security", "severity": "error",
-     "description": "Avoid innerHTML / document.write — use textContent / createElement."},
+     "description": "Don't build HTML with innerHTML."},
     {"rule": "security/links-noopener", "category": "security", "severity": "error",
-     "description": "target=\"_blank\" links must set rel=\"noopener\" (reverse-tabnabbing)."},
+     "description": "New-tab links need rel=\"noopener\"."},
     {"rule": "security/no-eval", "category": "security", "severity": "error",
-     "description": "No eval() or new Function() — avoids arbitrary code execution."},
+     "description": "No eval()."},
     # --- privacy / legal ---
     {"rule": "privacy/disclaimer-present", "category": "privacy", "severity": "error",
-     "description": "A footer or disclaimer (© / 'all rights reserved' / 'disclaimer')."},
+     "description": "Show a footer with a copyright line."},
     {"rule": "privacy/no-trackers", "category": "privacy", "severity": "error",
-     "description": "No third-party analytics or tracking pixels."},
+     "description": "No analytics or tracking."},
     {"rule": "privacy/privacy-link", "category": "privacy", "severity": "error",
-     "description": "A link to a privacy policy."},
+     "description": "Link to a privacy policy."},
     # --- data storage ---
     {"rule": "data/no-sensitive-plaintext", "category": "data", "severity": "error",
-     "description": "No sensitive fields (password/ssn/card/cvv/token) stored in plaintext."},
+     "description": "Never store passwords or card data as plain text."},
     {"rule": "data/consent-on-storage", "category": "data", "severity": "error",
-     "description": "If data is stored locally, the user is told (consent / cookie notice)."},
+     "description": "If you save data, tell the user."},
     # --- branding ---
     {"rule": "branding/approved-colors", "category": "branding", "severity": "error",
-     "description": "Use the European Commission colours — EU blue #004494 and EU yellow #FFD617; no other hex."},
+     "description": "Use EU colours: blue #004494, yellow #FFD617."},
     {"rule": "branding/approved-font", "category": "branding", "severity": "error",
-     "description": "Typography uses the approved 'Inter' typeface."},
+     "description": "Use the Inter font."},
 ]
 
 
