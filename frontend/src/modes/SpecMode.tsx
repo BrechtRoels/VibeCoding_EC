@@ -6,6 +6,7 @@ import { streamOnce } from "../lib/streamOnce";
 import { cleanHtml } from "../lib/useStream";
 import { loadSnap, saveSnap, sanitizeMessages } from "../lib/persist";
 import { submitForApproval } from "../lib/compliance";
+import { ComplianceModal } from "../components/ComplianceRequirements";
 import { apiUrl } from "../lib/api";
 
 type DocKey = "requirements" | "design" | "tasks";
@@ -74,6 +75,7 @@ export function SpecMode({ onReset }: { onReset?: () => void }) {
   const [reviewAttempts, setReviewAttempts] = useState<number>(snap.reviewAttempts ?? 0);
   const [approved, setApproved] = useState<boolean>(snap.approved ?? false);
   const [reviewing, setReviewing] = useState(false);
+  const [showReqs, setShowReqs] = useState(false);
 
   // Persist progress so a reload restores it (drop transient writing→ready).
   useEffect(() => {
@@ -348,7 +350,11 @@ export function SpecMode({ onReset }: { onReset?: () => void }) {
   const ready = fileStatus[activeFile] === "ready";
   const canResync = !!activeKey && activeKey !== "tasks" && ready && !busy;
 
-  const actions: React.ReactNode[] = [];
+  const actions: React.ReactNode[] = [
+    <button key="reqs" className="btn-secondary" onClick={() => setShowReqs(true)} title="View the compliance requirements to describe in your spec">
+      📋 Compliance requirements
+    </button>,
+  ];
   if (gate && !busy) {
     actions.push(
       <button key="ap" className="btn-primary" onClick={approve}>
@@ -367,6 +373,7 @@ export function SpecMode({ onReset }: { onReset?: () => void }) {
   }
 
   return (
+    <>
     <Ide
       projectName={`kiro · ${slug}`}
       chatTitle="Kiro Spec Workflow"
@@ -431,5 +438,7 @@ export function SpecMode({ onReset }: { onReset?: () => void }) {
         actions: actions.length ? <>{actions}</> : undefined,
       }}
     />
+    <ComplianceModal open={showReqs} onClose={() => setShowReqs(false)} />
+    </>
   );
 }

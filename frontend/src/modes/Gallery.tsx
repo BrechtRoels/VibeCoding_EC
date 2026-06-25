@@ -4,20 +4,16 @@ import { CodeGlyph } from "../components/CodeGlyph";
 import { RefreshIcon } from "../components/RefreshIcon";
 import { fetchGallery, MODE_LABEL, type GalleryEntry } from "../lib/gallery";
 import { resetSession } from "../lib/session";
-import { apiUrl } from "../lib/api";
+import { useComplianceRules, ComplianceGrid } from "../components/ComplianceRequirements";
 
 type Filter = "all" | "vibe" | "spec" | "harness";
 const ORDER: GalleryEntry["mode"][] = ["vibe", "spec", "harness"];
-
-type Rule = { rule: string; category: string; severity: "error" | "warn"; description: string };
-type Category = { key: string; label: string };
 
 /** Projected reference: the compliance requirements participants must write into their spec. */
 const BRIEF_KEY = "twtb_wall_brief";
 
 function ComplianceBrief() {
-  const [rules, setRules] = useState<Rule[]>([]);
-  const [cats, setCats] = useState<Category[]>([]);
+  const { rules, categories } = useComplianceRules();
   const [open, setOpen] = useState(() => sessionStorage.getItem(BRIEF_KEY) !== "0");
   const toggle = () =>
     setOpen((o) => {
@@ -25,16 +21,6 @@ function ComplianceBrief() {
       sessionStorage.setItem(BRIEF_KEY, n ? "1" : "0");
       return n;
     });
-
-  useEffect(() => {
-    fetch(apiUrl("/api/compliance/rules"))
-      .then((r) => r.json())
-      .then((d) => {
-        setRules(d.rules ?? []);
-        setCats(d.categories ?? []);
-      })
-      .catch(() => {});
-  }, []);
 
   if (!rules.length) return null;
   return (
@@ -47,27 +33,7 @@ function ComplianceBrief() {
         </div>
         <span className="cb-toggle">{open ? "▾ Hide" : "▸ Show"}</span>
       </button>
-      {open && (
-        <div className="comp-brief-grid">
-          {cats.map((c) => {
-            const rs = rules.filter((r) => r.category === c.key);
-            if (!rs.length) return null;
-            return (
-              <div className="comp-brief-cat" key={c.key}>
-                <h3>{c.label}</h3>
-                {rs.map((r) => (
-                  <div className="comp-brief-rule" key={r.rule}>
-                    <span className={`comp-tag ${r.severity === "error" ? "fail" : "warn"}`}>
-                      {r.severity === "error" ? "must" : "should"}
-                    </span>
-                    <span className="cbr-text">{r.description}</span>
-                  </div>
-                ))}
-              </div>
-            );
-          })}
-        </div>
-      )}
+      {open && <ComplianceGrid rules={rules} categories={categories} />}
     </section>
   );
 }
