@@ -20,19 +20,12 @@ The three paradigms differ only in how compliance is BAKED IN up front:
 """
 import re
 
-# Approved brand palette — European Commission colours. Hex used in the HTML must
-# come from this set, otherwise branding/approved-colors flags it.
+# European Commission brand colours. The branding rule is satisfied by USING the
+# EU blue as the primary colour (presence-based, like the harness token check) —
+# not by restricting every shade, which no real app can meet.
 EC_BLUE = "#004494"
-EC_BLUE_DARK = "#00336e"
+EC_BLUE_ALT = "#003399"  # EU flag blue — also accepted
 EC_YELLOW = "#ffd617"
-APPROVED_HEX = {
-    EC_BLUE, EC_BLUE_DARK, "#003399",  # EC / EU flag blue family
-    EC_YELLOW, "#ffcc00",  # EC / EU flag yellow
-    "#ffffff", "#f6f6f8", "#eeeef1", "#e7e7ea", "#d6d6db",  # surfaces / edges
-    "#17181c", "#5b606b", "#9094a0",  # foreground greys
-    "#dc2626", "#16a34a", "#d97706",  # danger / success / warn
-    "#000000",
-}
 
 # Rule metadata — surfaced via GET /api/compliance/rules and used for the spec
 # voice-over / info panel. The checker below produces one result per rule id.
@@ -71,7 +64,7 @@ COMPLIANCE_RULES = [
      "description": "If you save data, tell the user."},
     # --- branding ---
     {"rule": "branding/approved-colors", "category": "branding", "severity": "error",
-     "description": "Use EU colours: blue #004494, yellow #FFD617."},
+     "description": "Use EU blue #004494 as the main colour."},
     {"rule": "branding/approved-font", "category": "branding", "severity": "error",
      "description": "Use the Inter font."},
 ]
@@ -172,17 +165,10 @@ def run_compliance_check(html: str) -> list[dict]:
         else "Data is stored locally but the user is never told (no consent/notice).")
 
     # --- branding ---------------------------------------------------------
-    body_wo_root = re.sub(r":root\s*\{.*?\}", "", html, flags=re.S)
-
-    def norm_hex(h: str) -> str:
-        h = h.lower()
-        return "#" + "".join(c * 2 for c in h[1:]) if len(h) == 4 else h  # expand #abc -> #aabbcc
-
-    found_hex = {norm_hex(h) for h in re.findall(r"#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b", body_wo_root)}
-    stray = sorted(found_hex - APPROVED_HEX)
-    add("branding/approved-colors", "branding", "error", not stray,
-        "Colours from the European Commission palette." if not stray
-        else f"Off-brand hex (use EU blue #004494 / EU yellow #FFD617): {', '.join(stray[:6])}.")
+    uses_eu_blue = EC_BLUE[1:] in low or EC_BLUE_ALT[1:] in low
+    add("branding/approved-colors", "branding", "error", uses_eu_blue,
+        "Uses the European Commission blue (#004494)." if uses_eu_blue
+        else "Use the European Commission blue #004494 as the primary brand colour.")
 
     on_brand_font = "inter" in low
     add("branding/approved-font", "branding", "error", on_brand_font,
