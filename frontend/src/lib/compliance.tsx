@@ -49,7 +49,7 @@ export async function submitForApproval(opts: {
   attempt: number; // the attempt number this submission represents (1-based)
   automatic?: boolean;
   categories?: string[]; // spec mode: the participant's chosen compliance bar
-}): Promise<boolean> {
+}): Promise<ComplianceReview | null> {
   const { html, push, update, attempt, automatic, categories } = opts;
   const sid = push({ role: "system", kind: "start", text: `Compliance · review #${attempt} running`, streaming: true });
   let data: ComplianceReview;
@@ -57,7 +57,7 @@ export async function submitForApproval(opts: {
     data = await reviewCompliance(html, categories);
   } catch (e) {
     update(sid, { kind: "error", streaming: false, text: (e as Error).message || "Compliance gate unavailable — try again." });
-    return false;
+    return null;
   }
   update(sid, {
     kind: data.approved ? "done" : "error",
@@ -75,7 +75,7 @@ export async function submitForApproval(opts: {
       : `❌ Not approved — ${fails} item(s) must be fixed before this can ship. Address them and submit again.`,
     node: complianceGateNode(data.results, data.approved),
   });
-  return data.approved;
+  return data;
 }
 
 /** Fancy chat card rendering the compliance verdict: status badge, score bar, grouped rules. */

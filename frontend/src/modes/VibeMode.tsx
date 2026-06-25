@@ -112,8 +112,8 @@ export function VibeMode({ onReset }: { onReset?: () => void }) {
     const n = reviewAttempts + 1;
     setReviewAttempts(n);
     try {
-      const ok = await submitForApproval({ html, push, update, attempt: n });
-      if (ok) setApproved(true);
+      const rev = await submitForApproval({ html, push, update, attempt: n });
+      if (rev?.approved) setApproved(true);
     } finally {
       setBusy(false);
     }
