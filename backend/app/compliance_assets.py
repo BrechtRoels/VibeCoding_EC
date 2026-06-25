@@ -20,10 +20,14 @@ The three paradigms differ only in how compliance is BAKED IN up front:
 """
 import re
 
-# Approved brand palette (the harness primary + greys). Hex used in the HTML must
+# Approved brand palette — European Commission colours. Hex used in the HTML must
 # come from this set, otherwise branding/approved-colors flags it.
+EC_BLUE = "#004494"
+EC_BLUE_DARK = "#00336e"
+EC_YELLOW = "#ffd617"
 APPROVED_HEX = {
-    "#fd5108", "#e34503", "#ff8a3d",  # brand orange family
+    EC_BLUE, EC_BLUE_DARK, "#003399",  # EC / EU flag blue family
+    EC_YELLOW, "#ffcc00",  # EC / EU flag yellow
     "#ffffff", "#f6f6f8", "#eeeef1", "#e7e7ea", "#d6d6db",  # surfaces / edges
     "#17181c", "#5b606b", "#9094a0",  # foreground greys
     "#dc2626", "#16a34a", "#d97706",  # danger / success / warn
@@ -45,30 +49,30 @@ COMPLIANCE_RULES = [
      "description": "Self-contained — no external/CDN <script src> (web fonts excepted)."},
     {"rule": "security/no-hardcoded-secrets", "category": "security", "severity": "error",
      "description": "No API keys, tokens, passwords or secrets embedded in the source."},
-    {"rule": "security/no-inline-event-handlers", "category": "security", "severity": "warn",
+    {"rule": "security/no-inline-event-handlers", "category": "security", "severity": "error",
      "description": "No inline on* handlers (onclick=…) — bind events with addEventListener."},
-    {"rule": "security/no-unsafe-html", "category": "security", "severity": "warn",
+    {"rule": "security/no-unsafe-html", "category": "security", "severity": "error",
      "description": "Avoid innerHTML / document.write — use textContent / createElement."},
-    {"rule": "security/links-noopener", "category": "security", "severity": "warn",
+    {"rule": "security/links-noopener", "category": "security", "severity": "error",
      "description": "target=\"_blank\" links must set rel=\"noopener\" (reverse-tabnabbing)."},
-    {"rule": "security/no-eval", "category": "security", "severity": "warn",
+    {"rule": "security/no-eval", "category": "security", "severity": "error",
      "description": "No eval() or new Function() — avoids arbitrary code execution."},
     # --- privacy / legal ---
     {"rule": "privacy/disclaimer-present", "category": "privacy", "severity": "error",
      "description": "A footer or disclaimer (© / 'all rights reserved' / 'disclaimer')."},
     {"rule": "privacy/no-trackers", "category": "privacy", "severity": "error",
      "description": "No third-party analytics or tracking pixels."},
-    {"rule": "privacy/privacy-link", "category": "privacy", "severity": "warn",
+    {"rule": "privacy/privacy-link", "category": "privacy", "severity": "error",
      "description": "A link to a privacy policy."},
     # --- data storage ---
     {"rule": "data/no-sensitive-plaintext", "category": "data", "severity": "error",
      "description": "No sensitive fields (password/ssn/card/cvv/token) stored in plaintext."},
-    {"rule": "data/consent-on-storage", "category": "data", "severity": "warn",
+    {"rule": "data/consent-on-storage", "category": "data", "severity": "error",
      "description": "If data is stored locally, the user is told (consent / cookie notice)."},
     # --- branding ---
-    {"rule": "branding/approved-colors", "category": "branding", "severity": "warn",
-     "description": "Colors come from the approved brand palette — no stray hex values."},
-    {"rule": "branding/approved-font", "category": "branding", "severity": "warn",
+    {"rule": "branding/approved-colors", "category": "branding", "severity": "error",
+     "description": "Use the European Commission colours — EU blue #004494 and EU yellow #FFD617; no other hex."},
+    {"rule": "branding/approved-font", "category": "branding", "severity": "error",
      "description": "Typography uses the approved 'Inter' typeface."},
 ]
 
@@ -115,23 +119,23 @@ def run_compliance_check(html: str) -> list[dict]:
         r"mouseenter|mouseleave|focus|blur|load|dblclick|mousedown|mouseup)\s*=",
         html, re.I,
     )
-    add("security/no-inline-event-handlers", "security", "warn", not inline_handlers,
+    add("security/no-inline-event-handlers", "security", "error", not inline_handlers,
         "Events bound via addEventListener — no inline handlers." if not inline_handlers
         else f"{len(inline_handlers)} inline on* handler(s) — bind events with addEventListener instead.")
 
     unsafe_html = re.findall(r"\.(?:inner|outer)html\s*\+?=|document\.write\s*\(|insertadjacenthtml\s*\(", low)
-    add("security/no-unsafe-html", "security", "warn", not unsafe_html,
+    add("security/no-unsafe-html", "security", "error", not unsafe_html,
         "No innerHTML/document.write sinks." if not unsafe_html
         else f"{len(unsafe_html)} unsafe HTML sink(s) (innerHTML/document.write) — prefer textContent.")
 
     blank_links = re.findall(r"<a\b[^>]*\btarget\s*=\s*[\"']?_blank[\"']?[^>]*>", html, re.I)
     unsafe_links = [a for a in blank_links if "noopener" not in a.lower()]
-    add("security/links-noopener", "security", "warn", not unsafe_links,
+    add("security/links-noopener", "security", "error", not unsafe_links,
         "External links set rel=noopener." if not unsafe_links
         else f"{len(unsafe_links)} target=\"_blank\" link(s) missing rel=\"noopener\".")
 
     uses_eval = bool(re.search(r"\beval\s*\(", html) or re.search(r"\bnew\s+Function\s*\(", html))
-    add("security/no-eval", "security", "warn", not uses_eval,
+    add("security/no-eval", "security", "error", not uses_eval,
         "No eval/new Function." if not uses_eval
         else "Uses eval() or new Function() — avoid executing dynamic code.")
 
@@ -147,7 +151,7 @@ def run_compliance_check(html: str) -> list[dict]:
         else f"Tracking/analytics detected ({len(trackers)} reference(s)) — not permitted.")
 
     has_privacy_link = bool(re.search(r"<a\b[^>]*>[^<]*privacy[^<]*</a>", low) or re.search(r"<a\b[^>]*privacy[^>]*>", low))
-    add("privacy/privacy-link", "privacy", "warn", has_privacy_link,
+    add("privacy/privacy-link", "privacy", "error", has_privacy_link,
         "Privacy policy link present." if has_privacy_link
         else "No link to a privacy policy.")
 
@@ -163,7 +167,7 @@ def run_compliance_check(html: str) -> list[dict]:
         else f"{len(sensitive_keys)} sensitive field(s) written to storage in plaintext.")
 
     mentions_consent = bool(re.search(r"consent|cookie notice|we store|stored locally|your data is", low))
-    add("data/consent-on-storage", "data", "warn", (not uses_storage) or mentions_consent,
+    add("data/consent-on-storage", "data", "error", (not uses_storage) or mentions_consent,
         "No local storage, or user is informed." if (not uses_storage) or mentions_consent
         else "Data is stored locally but the user is never told (no consent/notice).")
 
@@ -176,12 +180,12 @@ def run_compliance_check(html: str) -> list[dict]:
 
     found_hex = {norm_hex(h) for h in re.findall(r"#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b", body_wo_root)}
     stray = sorted(found_hex - APPROVED_HEX)
-    add("branding/approved-colors", "branding", "warn", not stray,
-        "All colors from the approved palette." if not stray
-        else f"Off-brand hex outside the approved palette: {', '.join(stray[:6])}.")
+    add("branding/approved-colors", "branding", "error", not stray,
+        "Colours from the European Commission palette." if not stray
+        else f"Off-brand hex (use EU blue #004494 / EU yellow #FFD617): {', '.join(stray[:6])}.")
 
     on_brand_font = "inter" in low
-    add("branding/approved-font", "branding", "warn", on_brand_font,
+    add("branding/approved-font", "branding", "error", on_brand_font,
         "Uses the approved 'Inter' typeface." if on_brand_font
         else "Off-brand typography — use the approved 'Inter' typeface.")
 
@@ -230,7 +234,8 @@ _COMPLIANCE_GUIDANCE = {
     ],
     "branding": [
         "BRANDING",
-        "- Use ONLY the approved brand palette (orange #FD5108 family + the neutral greys); no stray hex colors.",
+        "- Use ONLY the European Commission colours: EU blue #004494 (primary), darker blue #00336E (hover), "
+        "and EU yellow #FFD617 (accent), plus neutral greys/white. No other hex colours anywhere.",
         "- Use the approved 'Inter' typeface for all text.",
     ],
 }

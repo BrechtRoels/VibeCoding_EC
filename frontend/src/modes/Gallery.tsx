@@ -13,10 +13,18 @@ type Rule = { rule: string; category: string; severity: "error" | "warn"; descri
 type Category = { key: string; label: string };
 
 /** Projected reference: the compliance requirements participants must write into their spec. */
+const BRIEF_KEY = "twtb_wall_brief";
+
 function ComplianceBrief() {
   const [rules, setRules] = useState<Rule[]>([]);
   const [cats, setCats] = useState<Category[]>([]);
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(() => sessionStorage.getItem(BRIEF_KEY) !== "0");
+  const toggle = () =>
+    setOpen((o) => {
+      const n = !o;
+      sessionStorage.setItem(BRIEF_KEY, n ? "1" : "0");
+      return n;
+    });
 
   useEffect(() => {
     fetch(apiUrl("/api/compliance/rules"))
@@ -31,13 +39,13 @@ function ComplianceBrief() {
   if (!rules.length) return null;
   return (
     <section className={`comp-brief ${open ? "open" : ""}`}>
-      <button className="comp-brief-head" onClick={() => setOpen((o) => !o)}>
+      <button className="comp-brief-head" onClick={toggle}>
         <span className="cb-mark">⚖</span>
         <div className="cb-titles">
           <h2>Compliance requirements</h2>
           <p>Spec-Driven won't add these for you — read them here and describe them in your spec, or approval fails.</p>
         </div>
-        <span className="cb-toggle">{open ? "▾" : "▸"}</span>
+        <span className="cb-toggle">{open ? "▾ Hide" : "▸ Show"}</span>
       </button>
       {open && (
         <div className="comp-brief-grid">
