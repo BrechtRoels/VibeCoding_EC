@@ -275,6 +275,10 @@ def harness_generate(feature: str) -> tuple[str, str]:
         "injected into your context on every request and are ENFORCED by the lint gate in pre-commit/CI "
         "— code that violates them fails the build. Implement the requested feature in full compliance "
         "so the result is indistinguishable in look & feel from every other app on this harness. "
+        "This is an official EUROPEAN COMMISSION application: reproduce design-system.css VERBATIM in an "
+        "inline <style> in <head>, render the mandatory layout shell, and keep the EC-blue header with the "
+        "EU emblem and yellow accent. Use EC blue for primary actions/nav, EU yellow for accents — it must "
+        "look like a polished, official EC product. "
         + _HTML_RULES + " " + FUNCTIONAL + "\n\n" + harness_block() + "\n\n" + compliance_block()
     )
     return system, f"Implement this feature inside the harness: {feature}"

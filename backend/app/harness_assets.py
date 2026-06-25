@@ -17,37 +17,64 @@ import re
 # ---------------------------------------------------------------------------
 HARNESS_CSS = """
 :root {
-  --c-page: #ffffff; --c-surface: #ffffff; --c-raised: #f6f6f8; --c-overlay: #eeeef1;
-  --c-edge: #e7e7ea; --c-edge-strong: #d6d6db; --c-fg: #17181c; --c-fg2: #5b606b;
-  --c-fg3: #9094a0; --c-primary: #004494; --c-primary-hover: #00336e; --c-primary-fg: #ffffff;
-  --c-accent2: #FFD617; --c-danger: #dc2626; --c-success: #16a34a; --c-warn: #d97706;
-  --c-primary-10: rgba(0,68,148,0.08); --c-shadow: rgba(20,20,30,0.10);
+  --c-page: #f3f5f9; --c-surface: #ffffff; --c-raised: #f6f8fc; --c-overlay: #eef1f7;
+  --c-edge: #dbe1ea; --c-edge-strong: #c4cdda; --c-fg: #1a1a2e; --c-fg2: #4a5568;
+  --c-fg3: #7b8494; --c-primary: #004494; --c-primary-hover: #00336e; --c-primary-fg: #ffffff;
+  --c-accent2: #FFD617; --c-danger: #d4351c; --c-success: #00703c; --c-warn: #b58105;
+  --c-primary-10: rgba(0,68,148,0.08); --c-shadow: rgba(0,68,148,0.10);
   color-scheme: light;
 }
 * { box-sizing: border-box; }
-body { margin: 0; font-family: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
-       background: var(--c-page); color: var(--c-fg); line-height: 1.5; -webkit-font-smoothing: antialiased; }
-.app-header { height: 56px; display: flex; align-items: center; gap: 12px; padding: 0 24px;
-              background: var(--c-surface); border-bottom: 1px solid var(--c-edge); }
-.app-header .brand { width: 26px; height: 26px; border-radius: 8px;
-              background: linear-gradient(135deg, var(--c-primary), var(--c-accent2)); }
-.app-header h1 { font-size: 16px; font-weight: 600; margin: 0; }
-.app-body { display: flex; min-height: calc(100vh - 56px); }
-.app-sidebar { width: 220px; background: var(--c-surface); border-right: 1px solid var(--c-edge); padding: 16px; }
-.app-main { flex: 1; padding: 32px; max-width: 1000px; }
-.card { background: var(--c-surface); border: 1px solid var(--c-edge); border-radius: 12px; padding: 16px; }
-.btn-primary { padding: 10px 16px; border-radius: 8px; border: none; background: var(--c-primary);
+body { margin: 0; font-family: "Inter", Arial, ui-sans-serif, system-ui, -apple-system, sans-serif;
+       background: var(--c-page); color: var(--c-fg); line-height: 1.55; -webkit-font-smoothing: antialiased; }
+
+/* European Commission header — EC-blue bar, EU-yellow accent line, EU emblem mark */
+.app-header { height: 60px; display: flex; align-items: center; gap: 14px; padding: 0 26px;
+              background: var(--c-primary); color: #fff; border-bottom: 3px solid var(--c-accent2); }
+.app-header .brand { position: relative; width: 30px; height: 30px; border-radius: 50%;
+              background: var(--c-primary); border: 1px solid rgba(255,255,255,0.35); flex-shrink: 0; }
+.app-header .brand::before { content: ""; position: absolute; top: 50%; left: 50%; width: 2.4px; height: 2.4px;
+              border-radius: 50%; background: var(--c-accent2); transform: translate(-50%, -50%);
+              box-shadow: 0 -9px 0 var(--c-accent2), 4.5px -7.8px 0 var(--c-accent2), 7.8px -4.5px 0 var(--c-accent2),
+                9px 0 0 var(--c-accent2), 7.8px 4.5px 0 var(--c-accent2), 4.5px 7.8px 0 var(--c-accent2),
+                0 9px 0 var(--c-accent2), -4.5px 7.8px 0 var(--c-accent2), -7.8px 4.5px 0 var(--c-accent2),
+                -9px 0 0 var(--c-accent2), -7.8px -4.5px 0 var(--c-accent2), -4.5px -7.8px 0 var(--c-accent2); }
+.app-header h1 { font-size: 16px; font-weight: 600; margin: 0; color: #fff; letter-spacing: 0.2px; }
+
+.app-body { display: flex; min-height: calc(100vh - 60px); }
+.app-sidebar { width: 232px; background: var(--c-surface); border-right: 1px solid var(--c-edge); padding: 18px 14px; }
+.app-sidebar a, .app-sidebar .nav-item { display: block; padding: 9px 12px; margin-bottom: 2px; border-radius: 6px;
+              color: var(--c-fg2); text-decoration: none; font-size: 14px; font-weight: 500; cursor: pointer; }
+.app-sidebar a:hover, .app-sidebar .nav-item:hover { background: var(--c-primary-10); color: var(--c-primary); }
+.app-sidebar a.active, .app-sidebar .nav-item.active { background: var(--c-primary); color: #fff; }
+.app-main { flex: 1; padding: 32px 38px; max-width: 1040px; }
+.app-main h2 { font-size: 22px; font-weight: 700; margin: 0 0 16px; color: var(--c-fg); }
+
+.card { background: var(--c-surface); border: 1px solid var(--c-edge); border-radius: 10px; padding: 20px;
+        box-shadow: 0 1px 2px var(--c-shadow); }
+.card + .card { margin-top: 16px; }
+a { color: var(--c-primary); }
+.btn-primary { padding: 10px 18px; border-radius: 6px; border: none; background: var(--c-primary);
                color: var(--c-primary-fg); font-size: 14px; font-weight: 600; cursor: pointer; }
 .btn-primary:hover { background: var(--c-primary-hover); }
-.btn-secondary { padding: 9px 14px; border-radius: 8px; border: 1px solid var(--c-edge-strong); background: var(--c-raised);
-                 color: var(--c-fg); font-size: 14px; font-weight: 500; cursor: pointer; }
-input, textarea, select { background: var(--c-raised); border: 1px solid var(--c-edge-strong); border-radius: 8px;
+.btn-secondary { padding: 9px 16px; border-radius: 6px; border: 1px solid var(--c-primary); background: var(--c-surface);
+                 color: var(--c-primary); font-size: 14px; font-weight: 600; cursor: pointer; }
+.btn-secondary:hover { background: var(--c-primary-10); }
+input, textarea, select { background: var(--c-surface); border: 1px solid var(--c-edge-strong); border-radius: 6px;
         color: var(--c-fg); padding: 10px 12px; font-size: 14px; font-family: inherit; }
-input:focus, textarea:focus { outline: none; border-color: var(--c-primary); }
+input:focus, textarea:focus, select:focus { outline: 2px solid var(--c-accent2); outline-offset: 0; border-color: var(--c-primary); }
 """.strip()
 
 HARNESS_CONTRACT = """
 # Architecture (locked)
+
+## Brand & look (European Commission)
+This is an official **European Commission** application. Every build MUST read as EC:
+- The `.app-header` is the EC-blue (#004494) top bar with a yellow (#FFD617) accent line and the
+  EU emblem `.brand` mark — keep it on every screen, with the app name in white.
+- EC blue is the primary colour (headers, nav active state, primary buttons, links); EU yellow is
+  the accent (focus rings, the header line). Clean, official, accessible — plenty of whitespace.
+- Reproduce `design-system.css` verbatim in an inline <style> in <head> so the EC styling is present.
 
 ## Stack
 - A single self-contained HTML document. Inline CSS + vanilla JS only.
@@ -56,8 +83,8 @@ HARNESS_CONTRACT = """
 ## Layout shell (mandatory)
     <header class="app-header"><span class="brand"></span><h1>App name</h1></header>
     <div class="app-body">
-      <aside class="app-sidebar"> ...nav... </aside>
-      <main class="app-main"> ...the feature... </main>
+      <aside class="app-sidebar"> ...nav (use .nav-item / <a>, mark current .active)... </aside>
+      <main class="app-main"> <h2>Page title</h2> ...the feature in .card blocks... </main>
     </div>
 
 ## Conventions
