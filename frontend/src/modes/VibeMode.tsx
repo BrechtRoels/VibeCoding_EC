@@ -9,17 +9,6 @@ import { submitForApproval } from "../lib/compliance";
 type Version = { html: string; label: string };
 
 const SNAP = "twtb:vibe";
-// Distinct aesthetics for the "New look" reroll — keeps features, swaps the vibe.
-const LOOKS = [
-  "a neobrutalist look with thick black borders and a bright accent colour",
-  "a glassmorphic style with frosted panels and soft gradients",
-  "a retro terminal / monospace green-on-black aesthetic",
-  "a clean minimal Swiss design with lots of whitespace and system fonts",
-  "playful rounded cards with a pastel palette and micro-animations",
-  "a dark dashboard look with neon accents",
-  "a warm editorial magazine layout with serif headings",
-  "a calm pastel sunrise gradient theme with rounded corners",
-];
 const INTRO: ChatMsg[] = [
   {
     id: "intro",
@@ -130,17 +119,6 @@ export function VibeMode({ onReset }: { onReset?: () => void }) {
     }
   }
 
-  function newLook() {
-    if (busy || !latest) return;
-    const look = LOOKS[Math.floor(Math.random() * LOOKS.length)];
-    push({ role: "user", author: "You", text: "✨ Give it a fresh new look" });
-    turn(
-      `Completely restyle the whole app with ${look}. Keep every feature and all saved data working — ` +
-        `change only the visual design (colours, typography, layout, spacing), and make it clearly different from the current look.`,
-      false
-    );
-  }
-
   function submit() {
     const text = input.trim();
     if (!text || busy) return;
@@ -186,11 +164,6 @@ export function VibeMode({ onReset }: { onReset?: () => void }) {
             <span className="pill accent">iteration {versions.length}</span>
           ) : (
             <span className="pill">vibecoding</span>
-          )}
-          {latest && (
-            <button className="btn-secondary" onClick={newLook} disabled={busy} title="Reroll the visual style, keeping all features & data">
-              ✨ New look
-            </button>
           )}
           {latest && (
             <button className="btn-secondary" onClick={submitApproval} disabled={busy || approved}>
