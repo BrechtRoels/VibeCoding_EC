@@ -9,7 +9,6 @@ import { apiUrl } from "../lib/api";
 
 type HFile = { name: string; lang: string; content: string };
 type Config = { you_control: string; enforced_by: string[]; files: HFile[] };
-type CheckResult = { rule: string; severity: "error" | "warn"; status: "pass" | "fail"; detail: string };
 
 const SNAP = "twtb:harness";
 const INTRO: ChatMsg[] = [
@@ -18,7 +17,7 @@ const INTRO: ChatMsg[] = [
     role: "agent",
     author: "Harness Agent",
     text:
-      "The design system and architecture are locked via rule files (AGENTS.md, .cursor/rules, copilot-instructions) and enforced by house-lint in pre-commit + CI. Describe a feature — I'll build it, then the gate verifies it complies and auto-fixes any violations.",
+      "The design system, architecture and compliance rules are locked via rule files (AGENTS.md, .cursor/rules, copilot-instructions) and baked into every build. Describe a feature — I'll build it inside the locked harness. When you're ready, Submit for approval to run the compliance review (it passes automatically — the harness already enforces the rules).",
   },
 ];
 
@@ -100,65 +99,6 @@ export function HarnessMode({ onReset }: { onReset?: () => void }) {
   const editorText = lockedFile ? lockedFile.content : building ? liveHtml : html;
   const editorStreaming = building && activeFile === "index.html";
 
-  function gateNode(results: CheckResult[]) {
-    return (
-      <div>
-        {results.map((r, i) => (
-          <div className="cm-issue" key={i}>
-            <span className={`sev ${r.status === "pass" ? "pass" : r.severity === "error" ? "high" : "medium"}`}>
-              {r.status === "pass" ? "pass" : r.severity}
-            </span>
-            <div style={{ flex: 1 }}>
-              <div className="it" style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: 11.5 }}>{r.rule}</div>
-              <div className="id">{r.detail}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  async function runGate(feature: string, built: string, attempt: number) {
-    const cid = push({ role: "system", kind: "start", text: "house-lint · running enforcement gate", streaming: true });
-    let data: { passed: boolean; results: CheckResult[] };
-    try {
-      const res = await fetch(apiUrl("/api/harness/check"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ html: built }),
-      });
-      data = await res.json();
-    } catch (e) {
-      update(cid, { kind: "error", streaming: false, text: (e as Error).message || "Gate unavailable — try again." });
-      return;
-    }
-    update(cid, { kind: data.passed ? "done" : "error", streaming: false, text: `house-lint · ${data.passed ? "passed ✓" : "violations found"}` });
-    push({
-      role: "agent",
-      author: "Harness Gate (CI)",
-      text: data.passed ? "All rules pass — this build complies with the harness." : "Some rules failed. The gate blocks this until it's fixed.",
-      node: gateNode(data.results),
-    });
-
-    if (!data.passed && attempt === 0) {
-      const violations = data.results.filter((r) => r.status === "fail").map((r) => `${r.rule}: ${r.detail}`);
-      push({ role: "system", kind: "start", text: "house-lint · gate failed → running auto-fix (lint --fix)" });
-      setBuilding(true);
-      setLiveHtml("");
-      setActiveFile("index.html");
-      try {
-        const fixed = await streamOnce("/api/harness/fix", { feature, current_html: built, violations }, (t) => setLiveHtml(t));
-        const clean = bakeHarnessCompliance(cleanHtml(fixed));
-        setHtml(clean);
-        setBuilding(false);
-        await runGate(feature, clean, 1);
-      } catch (e) {
-        setBuilding(false);
-        push({ role: "system", kind: "error", text: (e as Error).message || "Auto-fix failed — try again." });
-      }
-    }
-  }
-
   async function submitApproval() {
     if (!html || building || reviewing) return;
     setReviewing(true);
@@ -222,8 +162,7 @@ export function HarnessMode({ onReset }: { onReset?: () => void }) {
       setHtml(clean);
       setBuilding(false);
       setPreviewSig((s) => s + 1); // build complete → auto-open full-screen preview
-      update(aid, { streaming: false, text: (isRefine ? "Updated" : "Build done") + " — handing off to the house-lint gate to verify compliance." });
-      await runGate(feature, clean, 0);
+      update(aid, { streaming: false, text: (isRefine ? "Updated" : "Build done") + " — built inside the locked harness. Submit for approval when you're ready." });
     } catch (e) {
       setBuilding(false);
       update(aid, { streaming: false, kind: "error", text: (e as Error).message || "Build failed — please try again." });

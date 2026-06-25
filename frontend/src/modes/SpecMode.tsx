@@ -9,7 +9,6 @@ import { submitForApproval } from "../lib/compliance";
 import { apiUrl } from "../lib/api";
 
 type DocKey = "requirements" | "design" | "tasks";
-type Issue = { severity: "high" | "medium" | "low"; ref?: string; issue: string; detail: string };
 type SFile = { name: string; content: string };
 
 const ORDER: DocKey[] = ["requirements", "design", "tasks"];
@@ -50,7 +49,7 @@ const INTRO: ChatMsg[] = [
     role: "agent",
     author: "Kiro",
     text:
-      "Describe a feature and I'll work through four phases, pausing for your approval at each: requirements.md (testable EARS criteria) → design.md (architecture & data model) → tasks.md (an ordered plan) → implementation, executed task by task into index.html and then verified against the spec. The spec is the single source of truth — edit any file and the downstream regenerates.",
+      "Describe a feature and I'll work through four phases, pausing for your approval at each: requirements.md (testable EARS criteria) → design.md (architecture & data model) → tasks.md (an ordered plan) → implementation, executed task by task into index.html. The spec is the single source of truth — edit any file and the downstream regenerates. When the build is done, Submit for approval to run the compliance review.",
   },
 ];
 
@@ -228,45 +227,8 @@ export function SpecMode({ onReset }: { onReset?: () => void }) {
     setBuilding(false);
     setFile("index.html", "ready");
     setPreviewSig((s) => s + 1); // all tasks done → auto-open full-screen preview
-    await validate(theIdea, cur);
     setPhase("done");
-    push({ role: "agent", author: "Kiro", text: "All tasks complete — open index.html › Preview to use the app. Want to change anything? Describe it and I'll loop back through the spec." });
-  }
-
-  async function validate(theIdea: string, built: string) {
-    const aid = push({ role: "agent", author: "Kiro · verify", text: "Verifying index.html against requirements.md & design.md…", streaming: true });
-    try {
-      const res = await fetch(apiUrl("/api/spec/validate"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idea: theIdea, html: built, requirements: docs.requirements, design: docs.design }),
-      });
-      const data = await res.json();
-      const issues: Issue[] = data.issues ?? [];
-      update(aid, {
-        streaming: false,
-        text: issues.length === 0 ? "Verified — satisfies the spec. ✓" : `${issues.length} item(s) to address:`,
-        node:
-          issues.length === 0 ? undefined : (
-            <div>
-              {issues.map((is, i) => (
-                <div className="cm-issue" key={i}>
-                  <span className={`sev ${is.severity}`}>{is.severity}</span>
-                  <div style={{ flex: 1 }}>
-                    <div className="it">
-                      {is.ref && <span className="task-refs" style={{ marginRight: 6 }}>{is.ref}</span>}
-                      {is.issue}
-                    </div>
-                    <div className="id">{is.detail}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ),
-      });
-    } catch (e) {
-      update(aid, { streaming: false, kind: "error", text: `Verify failed: ${e}` });
-    }
+    push({ role: "agent", author: "Kiro", text: "All tasks complete — open index.html › Preview to use the app, then Submit for approval when you're ready. Want to change anything? Describe it and I'll loop back through the spec." });
   }
 
   // ---- workflow controls ----
