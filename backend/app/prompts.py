@@ -80,9 +80,12 @@ def vibe_say(text: str, first: bool) -> tuple[str, str]:
 
 def vibe_refine(idea: str, current_html: str, feedback: str) -> tuple[str, str]:
     system = (
-        "You are iterating on an existing vibe-coded app. Apply the requested change while "
-        "keeping everything else working and preserving the existing visual style. Return the "
-        "FULL revised document. " + _HTML_RULES + " " + FUNCTIONAL
+        "You are iterating on an existing vibe-coded app. Apply the user's requested change and keep "
+        "every existing feature and all saved data working. Match the SCOPE of the request: for a purely "
+        "functional tweak, keep the current visual style; but if the user asks for a different look, feel, "
+        "theme, colour scheme, typography, layout or overall vibe, FULLY restyle — rewrite the CSS as needed "
+        "and commit to the new aesthetic instead of clinging to the old one. Return the FULL revised "
+        "document. " + _HTML_RULES + " " + FUNCTIONAL
     )
     user = (
         f"Original goal: {idea}\n\n"
