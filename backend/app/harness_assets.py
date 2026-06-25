@@ -64,6 +64,16 @@ HARNESS_CONTRACT = """
 - Group content in <div class="card"> blocks.
 - Primary actions use .btn-primary; secondary actions use .btn-secondary.
 - All interactive state lives in vanilla JS at the bottom of <body>.
+
+## Compliance (locked — shipped automatically)
+Every harness document ships compliant by construction. The shell ALREADY includes:
+- A Content-Security-Policy <meta> in <head>.
+- A page <footer> with the © European Commission disclaimer, a Privacy policy link,
+  and a local-storage consent note.
+Build only with the EU palette tokens (var(--c-*) → EU blue #004494 / yellow #FFD617)
+and the Inter font; wire events with addEventListener (never inline onclick) and build
+the DOM with textContent/createElement (never innerHTML). The compliance gate therefore
+passes automatically — you only write the feature.
 """.strip()
 
 AGENTS_MD = """
