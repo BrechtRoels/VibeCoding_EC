@@ -288,21 +288,6 @@ export function SpecMode({ onReset }: { onReset?: () => void }) {
     }
   }
 
-  async function quickPlan(theIdea: string) {
-    setBusy(true);
-    push({ role: "system", kind: "info", text: "Kiro · Quick Plan — running all phases without approval gates" });
-    try {
-      const r = await genDoc("requirements", {}, theIdea);
-      const d = await genDoc("design", { requirements: r }, theIdea);
-      const t = await genDoc("tasks", { requirements: r, design: d }, theIdea);
-      await executeTasks(theIdea, d, t);
-    } catch (e) {
-      fail(e);
-    } finally {
-      setBusy(false);
-    }
-  }
-
   async function resync(fromKey: DocKey) {
     if (busy) return;
     setBusy(true);
@@ -351,8 +336,13 @@ export function SpecMode({ onReset }: { onReset?: () => void }) {
   const canResync = !!activeKey && activeKey !== "tasks" && ready && !busy;
 
   const actions: React.ReactNode[] = [
-    <button key="reqs" className="btn-secondary" onClick={() => setShowReqs(true)} title="View the compliance requirements to describe in your spec">
-      📋 Compliance requirements
+    <button key="reqs" className="btn-secondary ci-icon-btn" onClick={() => setShowReqs(true)} title="View the compliance requirements to describe in your spec">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M9 4h6a1 1 0 0 1 1 1v0a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1v0a1 1 0 0 1 1-1Z" />
+        <path d="M8 5H6a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1h-2" />
+        <path d="m9 13 2 2 4-4" />
+      </svg>
+      Compliance requirements
     </button>,
   ];
   if (gate && !busy) {
@@ -362,12 +352,6 @@ export function SpecMode({ onReset }: { onReset?: () => void }) {
       </button>,
       <button key="rg" className="btn-secondary" onClick={regenerate}>
         ↻ Regenerate
-      </button>
-    );
-  } else if (phase === "idle" && !busy) {
-    actions.push(
-      <button key="qp" className="btn-secondary" onClick={() => input.trim() && quickPlan(input.trim())} disabled={!input.trim()}>
-        ⚡ Quick Plan (no gates)
       </button>
     );
   }

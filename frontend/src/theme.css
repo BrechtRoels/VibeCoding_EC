@@ -626,6 +626,9 @@ label.fieldlabel { font-size: 12px; font-weight: 600; color: var(--c-fg2); displ
 .comp-brief-rule .comp-tag { margin-left: 0; align-self: flex-start; margin-top: 1px; }
 .cbr-text { font-size: 13px; color: var(--c-fg); line-height: 1.45; }
 
+.ci-icon-btn { display: inline-flex; align-items: center; gap: 7px; }
+.ci-icon-btn svg { flex-shrink: 0; }
+
 /* compliance requirements shown inside a modal (Spec chat) */
 .comp-modal { width: min(640px, 94vw); }
 .comp-modal .comp-brief-grid { padding: 0; }
