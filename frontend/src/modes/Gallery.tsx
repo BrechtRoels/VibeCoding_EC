@@ -3,16 +3,69 @@ import { Preview } from "../components/Preview";
 import { CodeGlyph } from "../components/CodeGlyph";
 import { RefreshIcon } from "../components/RefreshIcon";
 import { fetchGallery, MODE_LABEL, type GalleryEntry } from "../lib/gallery";
-import { COMPLIANCE_CATEGORIES } from "../lib/compliance";
 import { resetSession } from "../lib/session";
+import { apiUrl } from "../lib/api";
 
 type Filter = "all" | "vibe" | "spec" | "harness";
 const ORDER: GalleryEntry["mode"][] = ["vibe", "spec", "harness"];
-const CRIT_LABEL: Record<string, string> = Object.fromEntries(COMPLIANCE_CATEGORIES.map((c) => [c.key, c.label]));
+
+type Rule = { rule: string; category: string; severity: "error" | "warn"; description: string };
+type Category = { key: string; label: string };
+
+/** Projected reference: the compliance requirements participants must write into their spec. */
+function ComplianceBrief() {
+  const [rules, setRules] = useState<Rule[]>([]);
+  const [cats, setCats] = useState<Category[]>([]);
+  const [open, setOpen] = useState(true);
+
+  useEffect(() => {
+    fetch(apiUrl("/api/compliance/rules"))
+      .then((r) => r.json())
+      .then((d) => {
+        setRules(d.rules ?? []);
+        setCats(d.categories ?? []);
+      })
+      .catch(() => {});
+  }, []);
+
+  if (!rules.length) return null;
+  return (
+    <section className={`comp-brief ${open ? "open" : ""}`}>
+      <button className="comp-brief-head" onClick={() => setOpen((o) => !o)}>
+        <span className="cb-mark">⚖</span>
+        <div className="cb-titles">
+          <h2>Compliance requirements</h2>
+          <p>Spec-Driven won't add these for you — read them here and describe them in your spec, or approval fails.</p>
+        </div>
+        <span className="cb-toggle">{open ? "▾" : "▸"}</span>
+      </button>
+      {open && (
+        <div className="comp-brief-grid">
+          {cats.map((c) => {
+            const rs = rules.filter((r) => r.category === c.key);
+            if (!rs.length) return null;
+            return (
+              <div className="comp-brief-cat" key={c.key}>
+                <h3>{c.label}</h3>
+                {rs.map((r) => (
+                  <div className="comp-brief-rule" key={r.rule}>
+                    <span className={`comp-tag ${r.severity === "error" ? "fail" : "warn"}`}>
+                      {r.severity === "error" ? "must" : "should"}
+                    </span>
+                    <span className="cbr-text">{r.description}</span>
+                  </div>
+                ))}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
 
 function WallTile({ e }: { e: GalleryEntry }) {
   const [showReq, setShowReq] = useState(false);
-  const hasReq = !!(e.requirements || e.criteria?.length);
   return (
     <div className="wall-tile">
       <div className="wall-frame">
@@ -23,23 +76,12 @@ function WallTile({ e }: { e: GalleryEntry }) {
         <span className="wall-tt" title={e.title}>{e.title}</span>
         <span className="wall-by">{e.author}</span>
       </div>
-      {hasReq && (
+      {!!e.requirements && (
         <div className="wall-req">
-          {!!e.criteria?.length && (
-            <div className="wall-req-crit">
-              {e.criteria.map((k) => (
-                <span className="pill accent" key={k}>{CRIT_LABEL[k] ?? k}</span>
-              ))}
-            </div>
-          )}
-          {!!e.requirements && (
-            <>
-              <button className="wall-req-toggle" onClick={() => setShowReq((s) => !s)}>
-                {showReq ? "▾ Hide requirements" : "▸ Show requirements"}
-              </button>
-              {showReq && <div className="wall-req-body">{e.requirements}</div>}
-            </>
-          )}
+          <button className="wall-req-toggle" onClick={() => setShowReq((s) => !s)}>
+            {showReq ? "▾ Hide requirements" : "▸ Show requirements"}
+          </button>
+          {showReq && <div className="wall-req-body">{e.requirements}</div>}
         </div>
       )}
     </div>
@@ -105,6 +147,7 @@ export function Gallery({ onClose }: { onClose: () => void }) {
       </div>
 
       <div className="wall-body">
+        <ComplianceBrief />
         {loaded && entries.length === 0 && (
           <div className="wall-empty">
             No apps yet. As participants hit <strong>↗ Share to wall</strong>, their apps appear here live.

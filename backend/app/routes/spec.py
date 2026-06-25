@@ -21,7 +21,6 @@ class DocBody(BaseModel):
     design: str = ""
     feedback: str = ""
     current: str = ""
-    compliance: list[str] | None = None  # participant's chosen compliance bar
 
 
 class TaskBody(BaseModel):
@@ -31,7 +30,6 @@ class TaskBody(BaseModel):
     current_html: str = ""
     task_id: str
     task_text: str
-    compliance: list[str] | None = None
 
 
 class ValidateBody(BaseModel):
@@ -50,9 +48,9 @@ async def steering():
 @router.post("/doc")
 async def doc(body: DocBody):
     if body.kind == "requirements":
-        system, user = prompts.spec_requirements(body.idea, body.feedback, body.current, body.compliance)
+        system, user = prompts.spec_requirements(body.idea, body.feedback, body.current)
     elif body.kind == "design":
-        system, user = prompts.spec_design(body.idea, body.requirements, body.feedback, body.current, body.compliance)
+        system, user = prompts.spec_design(body.idea, body.requirements, body.feedback, body.current)
     else:  # tasks
         system, user = prompts.spec_tasks(body.idea, body.requirements, body.design, body.feedback, body.current)
     return stream_response(system, user)
@@ -62,7 +60,7 @@ async def doc(body: DocBody):
 async def task(body: TaskBody):
     """Execute one task from tasks.md on top of the current code (Kiro-style)."""
     system, user = prompts.spec_task(
-        body.idea, body.design, body.tasks, body.current_html, body.task_id, body.task_text, body.compliance
+        body.idea, body.design, body.tasks, body.current_html, body.task_id, body.task_text
     )
     return stream_response(system, user)
 

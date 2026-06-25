@@ -603,19 +603,23 @@ label.fieldlabel { font-size: 12px; font-weight: 600; color: var(--c-fg2); displ
 .comp-tag.fail { background: rgba(248,113,113,0.15); color: var(--c-danger); }
 .comp-tag.warn { background: rgba(251,191,36,0.18); color: var(--c-warn); }
 
-/* ---- Compliance criteria picker (spec idle) ---- */
-.comp-picker { flex-basis: 100%; display: flex; flex-direction: column; gap: 6px; padding: 10px 12px;
-  border: 1px dashed var(--c-primary-30); background: var(--c-primary-10); border-radius: var(--r-md); }
-.cp-label { font-size: 11.5px; font-weight: 600; color: var(--c-fg2); }
-.cp-chips { display: flex; flex-wrap: wrap; gap: 7px; }
-.cp-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px;
-  border: 1px solid var(--c-edge-strong); background: var(--c-surface); color: var(--c-fg2); font-size: 12px;
-  font-weight: 500; cursor: pointer; font-family: inherit; transition: all 0.14s; }
-.cp-chip:hover { border-color: var(--c-fg3); }
-.cp-chip.on { border-color: var(--c-primary); background: var(--c-primary-10); color: var(--c-fg); }
-.cp-box { width: 14px; height: 14px; border-radius: 4px; border: 1px solid var(--c-edge-strong); display: inline-flex;
-  align-items: center; justify-content: center; font-size: 10px; font-weight: 800; color: #fff; }
-.cp-chip.on .cp-box { background: var(--c-primary); border-color: var(--c-primary); }
+/* ---- Wall: projected compliance requirements board ---- */
+.comp-brief { border: 1px solid var(--c-edge); border-radius: var(--r-md); background: var(--c-surface);
+  margin-bottom: 22px; overflow: hidden; box-shadow: 0 1px 4px var(--c-shadow); }
+.comp-brief-head { width: 100%; display: flex; align-items: center; gap: 14px; padding: 16px 20px; cursor: pointer;
+  background: linear-gradient(90deg, var(--c-primary-10), transparent); border: none; text-align: left; font-family: inherit; }
+.cb-mark { width: 40px; height: 40px; border-radius: 11px; flex-shrink: 0; display: flex; align-items: center;
+  justify-content: center; font-size: 20px; background: var(--c-primary); color: #fff; }
+.cb-titles h2 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
+.cb-titles p { margin: 2px 0 0; font-size: 13px; color: var(--c-fg2); }
+.cb-toggle { margin-left: auto; font-size: 16px; color: var(--c-fg3); }
+.comp-brief-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px 24px;
+  padding: 4px 20px 20px; }
+.comp-brief-cat h3 { margin: 10px 0 6px; font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--c-primary); }
+.comp-brief-rule { display: flex; gap: 9px; align-items: flex-start; padding: 5px 0; }
+.comp-brief-rule .comp-tag { margin-left: 0; align-self: flex-start; margin-top: 1px; }
+.cbr-text { font-size: 13px; color: var(--c-fg); line-height: 1.45; }
 
 /* ---- Wall: spec requirements panel ---- */
 .wall-req { margin-top: 8px; border-top: 1px solid var(--c-edge); padding-top: 8px; }

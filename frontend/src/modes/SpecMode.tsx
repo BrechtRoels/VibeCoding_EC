@@ -5,7 +5,7 @@ import { parseTasks } from "../components/TaskChecklist";
 import { streamOnce } from "../lib/streamOnce";
 import { cleanHtml } from "../lib/useStream";
 import { loadSnap, saveSnap, sanitizeMessages } from "../lib/persist";
-import { submitForApproval, COMPLIANCE_CATEGORIES } from "../lib/compliance";
+import { submitForApproval } from "../lib/compliance";
 import { apiUrl } from "../lib/api";
 
 type DocKey = "requirements" | "design" | "tasks";
@@ -75,9 +75,6 @@ export function SpecMode({ onReset }: { onReset?: () => void }) {
   const [reviewAttempts, setReviewAttempts] = useState<number>(snap.reviewAttempts ?? 0);
   const [approved, setApproved] = useState<boolean>(snap.approved ?? false);
   const [reviewing, setReviewing] = useState(false);
-  const [criteria, setCriteria] = useState<string[]>(snap.criteria ?? COMPLIANCE_CATEGORIES.map((c) => c.key));
-  const toggleCriterion = (key: string) =>
-    setCriteria((cs) => (cs.includes(key) ? cs.filter((k) => k !== key) : [...cs, key]));
 
   // Persist progress so a reload restores it (drop transient writing→ready).
   useEffect(() => {
@@ -85,10 +82,10 @@ export function SpecMode({ onReset }: { onReset?: () => void }) {
     for (const [k, v] of Object.entries(fileStatus)) cleanStatus[k] = v === "writing" ? "ready" : v;
     saveSnap(SNAP, {
       idea, slug, docs, html, fileStatus: cleanStatus, activeFile,
-      gate, phase: phase === "execute" ? "tasks" : phase, reviewAttempts, approved, criteria,
+      gate, phase: phase === "execute" ? "tasks" : phase, reviewAttempts, approved,
       messages: sanitizeMessages(messages),
     });
-  }, [idea, slug, docs, html, fileStatus, activeFile, gate, phase, reviewAttempts, approved, criteria, messages]);
+  }, [idea, slug, docs, html, fileStatus, activeFile, gate, phase, reviewAttempts, approved, messages]);
 
   const idc = useRef(0);
   const mountId = useRef(Math.random().toString(36).slice(2, 7));
@@ -150,7 +147,7 @@ export function SpecMode({ onReset }: { onReset?: () => void }) {
     const mid = push({ role: "system", kind: "start", text: `Kiro · ${verb} ${FILE_OF[kind]}`, streaming: true });
     const full = await streamOnce(
       "/api/spec/doc",
-      { kind, idea: theIdea, requirements: ctx.requirements ?? "", design: ctx.design ?? "", feedback, current, compliance: criteria },
+      { kind, idea: theIdea, requirements: ctx.requirements ?? "", design: ctx.design ?? "", feedback, current },
       (t) => setDocs((d) => ({ ...d, [kind]: t }))
     );
     const clean = full.trim();
@@ -195,7 +192,7 @@ export function SpecMode({ onReset }: { onReset?: () => void }) {
     const n = reviewAttempts + 1;
     setReviewAttempts(n);
     try {
-      const ok = await submitForApproval({ html, push, update, attempt: n, categories: criteria });
+      const ok = await submitForApproval({ html, push, update, attempt: n });
       if (ok) setApproved(true);
     } finally {
       setReviewing(false);
@@ -220,7 +217,7 @@ export function SpecMode({ onReset }: { onReset?: () => void }) {
       setLiveHtml(cur);
       const full = await streamOnce(
         "/api/spec/task",
-        { idea: theIdea, design, tasks: tasksMd, current_html: cur, task_id: t.id, task_text: t.text, compliance: criteria },
+        { idea: theIdea, design, tasks: tasksMd, current_html: cur, task_id: t.id, task_text: t.text },
         (x) => setLiveHtml(x)
       );
       cur = cleanHtml(full);
@@ -401,20 +398,6 @@ export function SpecMode({ onReset }: { onReset?: () => void }) {
     );
   } else if (phase === "idle" && !busy) {
     actions.push(
-      <div key="cp" className="comp-picker">
-        <span className="cp-label">Compliance bar — pick what this app must meet:</span>
-        <div className="cp-chips">
-          {COMPLIANCE_CATEGORIES.map((c) => {
-            const on = criteria.includes(c.key);
-            return (
-              <button key={c.key} type="button" className={`cp-chip ${on ? "on" : ""}`} onClick={() => toggleCriterion(c.key)}>
-                <span className="cp-box">{on ? "✓" : ""}</span>
-                {c.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>,
       <button key="qp" className="btn-secondary" onClick={() => input.trim() && quickPlan(input.trim())} disabled={!input.trim()}>
         ⚡ Quick Plan (no gates)
       </button>
@@ -461,17 +444,12 @@ export function SpecMode({ onReset }: { onReset?: () => void }) {
               ? "complete"
               : "spec-driven"}
           </span>
-          {phase !== "idle" && (
-            <span className="pill" title={criteria.map((k) => COMPLIANCE_CATEGORIES.find((c) => c.key === k)?.label).filter(Boolean).join(" · ")}>
-              compliance: {criteria.length === COMPLIANCE_CATEGORIES.length ? "full bar" : criteria.length ? `${criteria.length}/${COMPLIANCE_CATEGORIES.length}` : "none"}
-            </span>
-          )}
           {html && phase === "done" && (
             <button className="btn-secondary" onClick={submitApproval} disabled={busy || building || reviewing || approved}>
               {approved ? "Approved ✓" : reviewing ? "…" : "Submit for approval"}
             </button>
           )}
-          <GallerySubmit mode="spec" title={idea} html={html} extras={{ requirements: docs.requirements, criteria }} />
+          <GallerySubmit mode="spec" title={idea} html={html} extras={{ requirements: docs.requirements }} />
         </>
       }
       input={{
