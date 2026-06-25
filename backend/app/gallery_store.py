@@ -58,7 +58,14 @@ def list_all() -> list[dict]:
     return _ensure()
 
 
-async def add(mode: str, title: str, html: str, author: str | None) -> dict:
+async def add(
+    mode: str,
+    title: str,
+    html: str,
+    author: str | None,
+    requirements: str | None = None,
+    criteria: list[str] | None = None,
+) -> dict:
     async with _lock:
         entries = _ensure()
         entry = {
@@ -69,6 +76,10 @@ async def add(mode: str, title: str, html: str, author: str | None) -> dict:
             "html": html,
             "ts": time.time(),
         }
+        if requirements:
+            entry["requirements"] = requirements[:8000]
+        if criteria:
+            entry["criteria"] = criteria
         entries.insert(0, entry)  # newest first
         del entries[MAX_ENTRIES:]
         _save(entries)

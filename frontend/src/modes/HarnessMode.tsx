@@ -4,6 +4,7 @@ import { GallerySubmit } from "../components/GallerySubmit";
 import { streamOnce } from "../lib/streamOnce";
 import { cleanHtml } from "../lib/useStream";
 import { loadSnap, saveSnap, sanitizeMessages } from "../lib/persist";
+import { submitForApproval } from "../lib/compliance";
 import { apiUrl } from "../lib/api";
 
 type HFile = { name: string; lang: string; content: string };
@@ -32,11 +33,14 @@ export function HarnessMode({ onReset }: { onReset?: () => void }) {
   const [lastFeature, setLastFeature] = useState<string>(snap.lastFeature ?? "");
   const [previewSig, setPreviewSig] = useState(0);
   const [messages, setMessages] = useState<ChatMsg[]>(snap.messages ?? INTRO);
+  const [reviewAttempts, setReviewAttempts] = useState<number>(snap.reviewAttempts ?? 0);
+  const [approved, setApproved] = useState<boolean>(snap.approved ?? false);
+  const [reviewing, setReviewing] = useState(false);
 
   // Persist progress so a reload restores it.
   useEffect(() => {
-    saveSnap(SNAP, { html, activeFile, lastFeature, messages: sanitizeMessages(messages) });
-  }, [html, activeFile, lastFeature, messages]);
+    saveSnap(SNAP, { html, activeFile, lastFeature, reviewAttempts, approved, messages: sanitizeMessages(messages) });
+  }, [html, activeFile, lastFeature, reviewAttempts, approved, messages]);
 
   const idc = useRef(0);
   const mountId = useRef(Math.random().toString(36).slice(2, 7));
@@ -122,10 +126,24 @@ export function HarnessMode({ onReset }: { onReset?: () => void }) {
     }
   }
 
+  async function submitApproval() {
+    if (!html || building || reviewing) return;
+    setReviewing(true);
+    const n = reviewAttempts + 1;
+    setReviewAttempts(n);
+    try {
+      const ok = await submitForApproval({ html, push, update, attempt: n, automatic: true });
+      if (ok) setApproved(true);
+    } finally {
+      setReviewing(false);
+    }
+  }
+
   async function build() {
     const text = input.trim();
     if (!text || building) return;
     setInput("");
+    setApproved(false); // a new build must be re-approved
     const isRefine = !!html; // follow-up messages iterate on the current app
     const feature = isRefine ? lastFeature || text : text;
     if (!isRefine) setLastFeature(text);
@@ -176,7 +194,12 @@ export function HarnessMode({ onReset }: { onReset?: () => void }) {
       messages={messages}
       titleActions={
         <>
-          <span className="pill accent">🔒 enforced by house-lint</span>
+          <span className="pill accent">{approved ? "✓ compliance approved" : "🔒 enforced by house-lint"}</span>
+          {html && (
+            <button className="btn-secondary" onClick={submitApproval} disabled={building || reviewing || approved}>
+              {approved ? "Approved ✓" : reviewing ? "…" : "Submit for approval"}
+            </button>
+          )}
           <GallerySubmit mode="harness" title={lastFeature} html={html} />
         </>
       }

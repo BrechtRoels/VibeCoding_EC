@@ -19,9 +19,9 @@ HARNESS_CSS = """
 :root {
   --c-page: #ffffff; --c-surface: #ffffff; --c-raised: #f6f6f8; --c-overlay: #eeeef1;
   --c-edge: #e7e7ea; --c-edge-strong: #d6d6db; --c-fg: #17181c; --c-fg2: #5b606b;
-  --c-fg3: #9094a0; --c-primary: #FD5108; --c-primary-hover: #e34503; --c-primary-fg: #ffffff;
-  --c-accent2: #ff8a3d; --c-danger: #dc2626; --c-success: #16a34a; --c-warn: #d97706;
-  --c-primary-10: rgba(253,81,8,0.09); --c-shadow: rgba(20,20,30,0.10);
+  --c-fg3: #9094a0; --c-primary: #004494; --c-primary-hover: #00336e; --c-primary-fg: #ffffff;
+  --c-accent2: #FFD617; --c-danger: #dc2626; --c-success: #16a34a; --c-warn: #d97706;
+  --c-primary-10: rgba(0,68,148,0.08); --c-shadow: rgba(20,20,30,0.10);
   color-scheme: light;
 }
 * { box-sizing: border-box; }
@@ -197,10 +197,10 @@ def run_harness_check(html: str) -> list[dict]:
         results.append({"rule": rule, "severity": severity, "status": "pass" if ok else "fail", "detail": detail})
 
     # design-system/tokens-present (error)
-    has_tokens = "--c-primary" in html and "fd5108" in html.lower()
+    has_tokens = "--c-primary" in html and "004494" in html.lower()
     add("design-system/tokens-present", "error", has_tokens,
         "design-system.css tokens present." if has_tokens
-        else "Locked design tokens missing (:root --c-* incl. --c-primary:#FD5108).")
+        else "Locked design tokens missing (:root --c-* incl. --c-primary:#004494).")
 
     # architecture/layout-shell (error)
     shell = all(c in html for c in ["app-header", "app-body", "app-main"])

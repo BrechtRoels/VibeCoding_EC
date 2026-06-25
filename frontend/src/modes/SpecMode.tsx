@@ -5,6 +5,7 @@ import { parseTasks } from "../components/TaskChecklist";
 import { streamOnce } from "../lib/streamOnce";
 import { cleanHtml } from "../lib/useStream";
 import { loadSnap, saveSnap, sanitizeMessages } from "../lib/persist";
+import { submitForApproval } from "../lib/compliance";
 import { apiUrl } from "../lib/api";
 
 type DocKey = "requirements" | "design" | "tasks";
@@ -71,6 +72,9 @@ export function SpecMode({ onReset }: { onReset?: () => void }) {
   const [gate, setGate] = useState<DocKey | null>(snap.gate ?? null);
   const [phase, setPhase] = useState<"idle" | "requirements" | "design" | "tasks" | "execute" | "done">(snap.phase ?? "idle");
   const [messages, setMessages] = useState<ChatMsg[]>(snap.messages ?? INTRO);
+  const [reviewAttempts, setReviewAttempts] = useState<number>(snap.reviewAttempts ?? 0);
+  const [approved, setApproved] = useState<boolean>(snap.approved ?? false);
+  const [reviewing, setReviewing] = useState(false);
 
   // Persist progress so a reload restores it (drop transient writing→ready).
   useEffect(() => {
@@ -78,9 +82,10 @@ export function SpecMode({ onReset }: { onReset?: () => void }) {
     for (const [k, v] of Object.entries(fileStatus)) cleanStatus[k] = v === "writing" ? "ready" : v;
     saveSnap(SNAP, {
       idea, slug, docs, html, fileStatus: cleanStatus, activeFile,
-      gate, phase: phase === "execute" ? "tasks" : phase, messages: sanitizeMessages(messages),
+      gate, phase: phase === "execute" ? "tasks" : phase, reviewAttempts, approved,
+      messages: sanitizeMessages(messages),
     });
-  }, [idea, slug, docs, html, fileStatus, activeFile, gate, phase, messages]);
+  }, [idea, slug, docs, html, fileStatus, activeFile, gate, phase, reviewAttempts, approved, messages]);
 
   const idc = useRef(0);
   const mountId = useRef(Math.random().toString(36).slice(2, 7));
@@ -181,8 +186,22 @@ export function SpecMode({ onReset }: { onReset?: () => void }) {
 
   const MAX_TASKS = 5; // each task is a full Opus rebuild — cap to keep runs fast
 
+  async function submitApproval() {
+    if (!html || busy || building || reviewing) return;
+    setReviewing(true);
+    const n = reviewAttempts + 1;
+    setReviewAttempts(n);
+    try {
+      const ok = await submitForApproval({ html, push, update, attempt: n });
+      if (ok) setApproved(true);
+    } finally {
+      setReviewing(false);
+    }
+  }
+
   async function executeTasks(theIdea: string, design: string, tasksMd: string) {
     setPhase("execute");
+    setApproved(false); // a fresh build must be re-approved
     const all = parseTasks(tasksMd);
     const items = all.slice(0, MAX_TASKS);
     if (all.length > items.length) {
@@ -415,9 +434,22 @@ export function SpecMode({ onReset }: { onReset?: () => void }) {
       titleActions={
         <>
           <span className="pill accent">
-            {busy ? "working…" : gate ? `awaiting approval · ${FILE_OF[gate]}` : phase === "done" ? "complete" : "spec-driven"}
+            {busy
+              ? "working…"
+              : approved
+              ? `✓ approved · attempt ${reviewAttempts}`
+              : gate
+              ? `awaiting approval · ${FILE_OF[gate]}`
+              : phase === "done"
+              ? "complete"
+              : "spec-driven"}
           </span>
-          <GallerySubmit mode="spec" title={idea} html={html} />
+          {html && phase === "done" && (
+            <button className="btn-secondary" onClick={submitApproval} disabled={busy || building || reviewing || approved}>
+              {approved ? "Approved ✓" : reviewing ? "…" : "Submit for approval"}
+            </button>
+          )}
+          <GallerySubmit mode="spec" title={idea} html={html} extras={{ requirements: docs.requirements }} />
         </>
       }
       input={{
