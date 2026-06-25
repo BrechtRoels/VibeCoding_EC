@@ -14,7 +14,7 @@ const INTRO: ChatMsg[] = [
     id: "intro",
     role: "agent",
     author: "Builder Agent",
-    text: "Hey! Tell me what app you'd like and I'll build it for you. Once it's up, just describe any change in the chat and I'll iterate on it.",
+    text: "Describe the application you'd like and I'll build it. Once it's running, describe any change in the chat and I'll iterate on it.",
   },
 ];
 
@@ -81,7 +81,7 @@ export function VibeMode({ onReset }: { onReset?: () => void }) {
     try {
       await streamOnce("/api/vibe/say", { text: userText, first }, (t) => update(aid, { text: t }));
     } catch {
-      update(aid, { text: first ? "On it — building your app now…" : "Got it — updating it now…" });
+      update(aid, { text: first ? "Understood. Starting the build now." : "Understood. Applying the update now." });
     }
     update(aid, { streaming: false });
 
@@ -94,7 +94,7 @@ export function VibeMode({ onReset }: { onReset?: () => void }) {
       await gen.run(url, body, (full) => {
         commit(label, full);
         update(sid, { kind: "done", streaming: false, text: `index.html ready · ${label} (${full.length} chars)` });
-        push({ role: "agent", author: "Builder Agent", text: `Done! Want any changes?` });
+        push({ role: "agent", author: "Builder Agent", text: `Build complete. Let me know if you'd like any changes.` });
       });
       setPreviewSig((s) => s + 1); // build complete → auto-open full-screen preview
     } catch (e) {

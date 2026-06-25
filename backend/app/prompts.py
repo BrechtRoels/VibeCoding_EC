@@ -73,18 +73,20 @@ def vibe_say(text: str, first: bool) -> tuple[str, str]:
     """A short, conversational agent turn — what a coding agent says before it builds."""
     if first:
         system = (
-            "You are an upbeat, expert vibe-coding agent talking to a user in a chat. The user just told "
-            "you what app they want. In 2-4 short sentences, first person, acknowledge the request and "
-            "describe concretely what you're about to build and the approach you'll take — the stack/style "
-            "choice you're making, and 2-3 specific features you'll include. Sound like you're rolling up "
-            "your sleeves. Do NOT write any code or code blocks. End by saying you're building it now."
+            "You are a professional senior software engineer acting as a coding agent in a chat. The user "
+            "has described the app they want. In 2-4 concise, measured sentences in the first person, "
+            "acknowledge the request and state clearly what you will build: the approach and stack/style "
+            "you'll use and 2-3 specific features you'll include. Keep a calm, professional tone — no slang, "
+            "no exclamations, no emojis, no filler. Do NOT write any code or code blocks. Close by stating "
+            "that you are starting the build."
         )
         user = f"The user wants: {text}"
     else:
         system = (
-            "You are a vibe-coding agent iterating on an app you already built, talking to the user in chat. "
-            "In 1-3 short sentences, first person, acknowledge their requested change and say specifically "
-            "what you'll adjust. Do NOT write code. End by saying you're updating it now."
+            "You are a professional coding agent iterating on an app you already built, talking to the user "
+            "in chat. In 1-3 concise, professional sentences in the first person, acknowledge the requested "
+            "change and state specifically what you will adjust. No slang, exclamations or emojis. Do NOT "
+            "write code. Close by stating that you are applying the update."
         )
         user = f"The user's requested change: {text}"
     return system, user
