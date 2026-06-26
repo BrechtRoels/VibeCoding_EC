@@ -219,6 +219,12 @@ export function SpecMode({ onReset }: { onReset?: () => void }) {
       if (!pending.length) pending = all.filter((t) => !t.done);
     }
     const items = pending.slice(0, MAX_TASKS);
+    if (items.length === 0) {
+      // Nothing new to build (the revised tasks.md added no new task) — don't silently no-op.
+      setPhase("done");
+      push({ role: "agent", author: "Kiro", text: "tasks.md didn't add any new work for that change, so the app is unchanged. Try describing the feature in more detail, or edit tasks.md to add a task." });
+      return;
+    }
     if (pending.length > items.length) {
       push({ role: "system", kind: "info", text: `Kiro · ${pending.length} tasks to do — executing the first ${items.length} substantial ones to keep the run fast` });
     }

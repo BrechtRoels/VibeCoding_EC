@@ -227,7 +227,21 @@ def spec_tasks(idea: str, requirements: str, design: str, feedback: str = "", cu
     )
     ctx = f"App idea: {idea}\n\n=== requirements.md ===\n{requirements}\n\n=== design.md ===\n{design}\n\n"
     if feedback:
-        system = base + _REVISE
+        if "[x]" in current.lower():
+            # Iteration: the app is already built and some tasks are completed. Keep the
+            # done work untouched and APPEND fresh unchecked tasks for the new feature, so
+            # the executor has something new to build on top.
+            system = (
+                "You are Kiro's Implementation Planning phase, REVISING tasks.md for a FOLLOW-UP change to an "
+                "app that is already built. Output the FULL updated tasks.md, same checkbox format "
+                "`- [ ] T<n> (R<ids>): <imperative task>`, starting with `# Tasks`. Keep EVERY completed "
+                "`- [x]` task EXACTLY as-is (same id, text and [x] mark) — that work already shipped; never "
+                "re-check, rewrite, duplicate or renumber it. Then APPEND 1-3 NEW `- [ ] ` tasks with the next "
+                "sequential T ids that implement ONLY the newly added requirement(s)/feature. There MUST be at "
+                "least one new unchecked task. " + _SPEC_MD_RULES
+            )
+        else:
+            system = base + _REVISE
         user = ctx + f"=== current tasks.md ===\n{current}\n\nUser's update: {feedback}\n\nReturn the full revised tasks.md."
     else:
         system = base
