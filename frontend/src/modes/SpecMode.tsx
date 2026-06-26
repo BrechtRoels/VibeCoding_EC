@@ -76,6 +76,11 @@ export function SpecMode({ onReset }: { onReset?: () => void }) {
   const [approved, setApproved] = useState<boolean>(snap.approved ?? false);
   const [reviewing, setReviewing] = useState(false);
   const [showReqs, setShowReqs] = useState(false);
+  // When the user adds features to a completed app, we REVISE the spec on top of
+  // itself instead of regenerating from scratch. iterBase = the spec snapshot at
+  // the start of this iteration; iterFeedback = the requested feature.
+  const [iterFeedback, setIterFeedback] = useState<string>(snap.iterFeedback ?? "");
+  const [iterBase, setIterBase] = useState<Record<DocKey, string> | null>(snap.iterBase ?? null);
 
   // Persist progress so a reload restores it (drop transient writing→ready).
   useEffect(() => {
@@ -84,9 +89,10 @@ export function SpecMode({ onReset }: { onReset?: () => void }) {
     saveSnap(SNAP, {
       idea, slug, docs, html, fileStatus: cleanStatus, activeFile,
       gate, phase: phase === "execute" ? "tasks" : phase, reviewAttempts, approved,
+      iterFeedback, iterBase,
       messages: sanitizeMessages(messages),
     });
-  }, [idea, slug, docs, html, fileStatus, activeFile, gate, phase, reviewAttempts, approved, messages]);
+  }, [idea, slug, docs, html, fileStatus, activeFile, gate, phase, reviewAttempts, approved, iterFeedback, iterBase, messages]);
 
   const idc = useRef(0);
   const mountId = useRef(Math.random().toString(36).slice(2, 7));
@@ -200,17 +206,26 @@ export function SpecMode({ onReset }: { onReset?: () => void }) {
     }
   }
 
-  async function executeTasks(theIdea: string, design: string, tasksMd: string) {
+  async function executeTasks(theIdea: string, design: string, tasksMd: string, baseHtml = "", baseTasksMd = "") {
     setPhase("execute");
     setApproved(false); // a fresh build must be re-approved
     const all = parseTasks(tasksMd);
-    const items = all.slice(0, MAX_TASKS);
-    if (all.length > items.length) {
-      push({ role: "system", kind: "info", text: `Kiro · ${all.length} tasks planned — executing the first ${items.length} substantial ones to keep the run fast` });
+    // On an iteration (baseHtml set) only run the NEW tasks (ids not completed before), on top
+    // of the existing app — robust even if the revised tasks.md re-emits checkboxes.
+    let pending = all;
+    if (baseHtml) {
+      const prevDone = new Set(parseTasks(baseTasksMd).filter((t) => t.done).map((t) => t.id));
+      pending = all.filter((t) => !prevDone.has(t.id));
+      if (!pending.length) pending = all.filter((t) => !t.done);
     }
-    push({ role: "system", kind: "info", text: `Kiro · executing ${items.length} tasks from tasks.md` });
+    const items = pending.slice(0, MAX_TASKS);
+    if (pending.length > items.length) {
+      push({ role: "system", kind: "info", text: `Kiro · ${pending.length} tasks to do — executing the first ${items.length} substantial ones to keep the run fast` });
+    }
+    push({ role: "system", kind: "info", text: `Kiro · executing ${items.length} ${baseHtml ? "new " : ""}task(s) from tasks.md` });
     setActiveFile("tasks.md");
-    let cur = "";
+    let cur = baseHtml;
+    if (baseHtml) setHtml(baseHtml);
     for (const t of items) {
       const sid = push({ role: "system", kind: "start", text: `${t.id} — ${t.text}`, streaming: true });
       setBuilding(true);
@@ -247,22 +262,43 @@ export function SpecMode({ onReset }: { onReset?: () => void }) {
     }
   }
 
+  // Add features to a completed app: revise requirements ON TOP of the current spec.
+  async function startIteration(feature: string) {
+    setBusy(true);
+    setApproved(false);
+    setPhase("requirements");
+    const base = { requirements: docs.requirements, design: docs.design, tasks: docs.tasks };
+    setIterBase(base);
+    setIterFeedback(feature);
+    try {
+      await genDoc("requirements", {}, idea, feature, base.requirements);
+      gatePrompt("requirements");
+    } catch (e) {
+      fail(e);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function approve() {
     if (!gate || busy) return;
     setBusy(true);
     const current = gate;
     setGate(null);
+    const fb = iterFeedback; // "" on the first pass; the feature text while iterating
     try {
       if (current === "requirements") {
         setPhase("design");
-        await genDoc("design", { requirements: docs.requirements }, idea);
+        await genDoc("design", { requirements: docs.requirements }, idea, fb, iterBase ? iterBase.design : "");
         gatePrompt("design");
       } else if (current === "design") {
         setPhase("tasks");
-        await genDoc("tasks", { requirements: docs.requirements, design: docs.design }, idea);
+        await genDoc("tasks", { requirements: docs.requirements, design: docs.design }, idea, fb, iterBase ? iterBase.tasks : "");
         gatePrompt("tasks");
       } else {
-        await executeTasks(idea, docs.design, docs.tasks);
+        await executeTasks(idea, docs.design, docs.tasks, iterBase ? html : "", iterBase ? iterBase.tasks : "");
+        setIterBase(null);
+        setIterFeedback("");
       }
     } catch (e) {
       fail(e);
@@ -279,7 +315,8 @@ export function SpecMode({ onReset }: { onReset?: () => void }) {
     try {
       const ctx =
         k === "requirements" ? {} : k === "design" ? { requirements: docs.requirements } : { requirements: docs.requirements, design: docs.design };
-      await genDoc(k, ctx, idea);
+      // While iterating, re-apply the feature against the pre-iteration doc (don't regen from scratch).
+      await genDoc(k, ctx, idea, iterFeedback, iterBase ? iterBase[k] : "");
       gatePrompt(k);
     } catch (e) {
       fail(e);
@@ -321,14 +358,10 @@ export function SpecMode({ onReset }: { onReset?: () => void }) {
       push({ role: "system", kind: "info", text: `Kiro · created .kiro/specs/${s}/` });
       startRequirements(text);
     } else {
-      // iterate: loop the change back through the spec
-      const newIdea = `${idea}\n\nUPDATE REQUEST: ${text}`;
-      setIdea(newIdea);
+      // iterate: revise the spec ON TOP of the existing one (don't wipe/regenerate)
       push({ role: "user", author: "You", text });
-      push({ role: "system", kind: "info", text: "Kiro · spec update — looping back to requirements" });
-      setFileStatus({});
-      setDocs({ requirements: "", design: "", tasks: "" });
-      startRequirements(newIdea);
+      push({ role: "system", kind: "info", text: "Kiro · extending the spec — updating requirements on top of the current spec" });
+      startIteration(text);
     }
   }
 

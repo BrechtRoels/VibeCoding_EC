@@ -1,11 +1,11 @@
 export type TaskItem = { id: string; refs: string; text: string; done: boolean };
 
-/** Parse `- [ ] T1 (R1, R2): description` lines from tasks.md. */
+/** Parse `- [ ] T1 (R1, R2): description` lines from tasks.md (captures the checkbox state). */
 export function parseTasks(md: string): TaskItem[] {
   const out: TaskItem[] = [];
   for (const line of md.split("\n")) {
-    const m = line.match(/^\s*-\s*\[[ xX]?\]\s*(T\d+)\s*(?:\(([^)]*)\))?\s*:?\s*(.*)$/);
-    if (m) out.push({ id: m[1], refs: m[2] ?? "", text: m[3].trim(), done: false });
+    const m = line.match(/^\s*-\s*\[([ xX]?)\]\s*(T\d+)\s*(?:\(([^)]*)\))?\s*:?\s*(.*)$/);
+    if (m) out.push({ id: m[2], refs: m[3] ?? "", text: m[4].trim(), done: m[1].toLowerCase() === "x" });
   }
   return out;
 }
