@@ -103,7 +103,7 @@ export default function App() {
         </button>
         <div className="app-env">
           <span className="env-dot" />
-          PwC GenAI · Opus
+          PwC GenAI · Mistral
         </div>
       </div>
 
