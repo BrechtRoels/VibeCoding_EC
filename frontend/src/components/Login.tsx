@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { CodeGlyph } from "./CodeGlyph";
-
-const PASSWORD = "PwCVibeCoding2026";
+import { login } from "../lib/api";
 
 const QUOTES: { text: string; author: string }[] = [
   { text: "Talk is cheap. Show me the code.", author: "Linus Torvalds" },
@@ -21,6 +20,7 @@ const QUOTES: { text: string; author: string }[] = [
 export function Login({ onUnlock }: { onUnlock: () => void }) {
   const [value, setValue] = useState("");
   const [error, setError] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [qi, setQi] = useState(0);
 
   useEffect(() => {
@@ -28,15 +28,23 @@ export function Login({ onUnlock }: { onUnlock: () => void }) {
     return () => clearInterval(t);
   }, []);
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (value === PASSWORD) {
-      onUnlock();
-    } else {
-      setError(true);
-      setValue("");
-      setTimeout(() => setError(false), 600);
+    if (busy) return;
+    setBusy(true);
+    try {
+      const { ok } = await login(value);
+      if (ok) {
+        onUnlock();
+        return;
+      }
+    } catch {
+      /* network error — treated as a failed attempt below */
     }
+    setBusy(false);
+    setError(true);
+    setValue("");
+    setTimeout(() => setError(false), 600);
   }
 
   const quote = QUOTES[qi];
@@ -79,8 +87,8 @@ export function Login({ onUnlock }: { onUnlock: () => void }) {
             placeholder="Enter password"
             onChange={(e) => setValue(e.target.value)}
           />
-          <button type="submit" className="btn-primary" disabled={!value}>
-            Enter the studio
+          <button type="submit" className="btn-primary" disabled={!value || busy}>
+            {busy ? "Checking…" : "Enter the studio"}
           </button>
           <p className="login-err">{error ? "Incorrect password — try again" : ""}</p>
         </form>

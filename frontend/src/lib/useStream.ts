@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import { apiUrl } from "./api";
+import { apiUrl, authHeaders } from "./api";
 
 type StreamState = {
   text: string;
@@ -42,7 +42,7 @@ export function useStream() {
       try {
         const res = await fetch(apiUrl(url), {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: authHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify(body),
           signal: ac.signal,
         });

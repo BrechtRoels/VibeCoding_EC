@@ -5,11 +5,12 @@ type Props = {
   mode: GalleryEntry["mode"];
   title: string;
   html: string;
+  iterations?: number; // competition: build rounds taken in this lab
   extras?: GalleryExtras; // spec mode: requirements + chosen compliance criteria
 };
 
 /** A small "share to the projected wall" button for the IDE titlebar. */
-export function GallerySubmit({ mode, title, html, extras }: Props) {
+export function GallerySubmit({ mode, title, html, iterations, extras }: Props) {
   const [state, setState] = useState<"idle" | "sending" | "done">("idle");
   if (!html) return null;
 
@@ -17,7 +18,7 @@ export function GallerySubmit({ mode, title, html, extras }: Props) {
     if (state === "sending") return;
     setState("sending");
     try {
-      await submitGallery(mode, title || "Untitled", html, ensureName(), extras);
+      await submitGallery(mode, title || "Untitled", html, ensureName(), { ...extras, iterations });
       setState("done");
       setTimeout(() => setState("idle"), 2200);
     } catch {

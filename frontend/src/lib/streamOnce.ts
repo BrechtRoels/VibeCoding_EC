@@ -1,4 +1,4 @@
-import { apiUrl } from "./api";
+import { apiUrl, authHeaders } from "./api";
 
 /** One-shot SSE consumer for parallel jobs (e.g. Compare variants). */
 export async function streamOnce(
@@ -8,7 +8,7 @@ export async function streamOnce(
 ): Promise<string> {
   const res = await fetch(apiUrl(url), {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: authHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(body),
   });
   if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);

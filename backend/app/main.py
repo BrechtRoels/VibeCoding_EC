@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from . import config
-from .routes import compliance, gallery, harness, session, spec, vibe
+from .routes import admin, compliance, gallery, harness, session, spec, vibe
 
 logging.basicConfig(level=logging.INFO)
 
@@ -50,6 +50,7 @@ app.include_router(harness.router)
 app.include_router(compliance.router)
 app.include_router(gallery.router)
 app.include_router(session.router)
+app.include_router(admin.router)
 
 
 @app.get("/healthz")

@@ -170,7 +170,7 @@ export function VibeMode({ onReset }: { onReset?: () => void }) {
               {approved ? "Approved ✓" : "Submit for approval"}
             </button>
           )}
-          <GallerySubmit mode="vibe" title={idea} html={latest?.html ?? ""} />
+          <GallerySubmit mode="vibe" title={idea} html={latest?.html ?? ""} iterations={versions.length} />
         </>
       }
       input={{

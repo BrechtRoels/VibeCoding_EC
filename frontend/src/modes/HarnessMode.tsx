@@ -68,11 +68,12 @@ export function HarnessMode({ onReset }: { onReset?: () => void }) {
   const [reviewAttempts, setReviewAttempts] = useState<number>(snap.reviewAttempts ?? 0);
   const [approved, setApproved] = useState<boolean>(snap.approved ?? false);
   const [reviewing, setReviewing] = useState(false);
+  const [builds, setBuilds] = useState<number>(snap.builds ?? 0); // competition: build rounds taken
 
   // Persist progress so a reload restores it.
   useEffect(() => {
-    saveSnap(SNAP, { html, activeFile, lastFeature, reviewAttempts, approved, messages: sanitizeMessages(messages) });
-  }, [html, activeFile, lastFeature, reviewAttempts, approved, messages]);
+    saveSnap(SNAP, { html, activeFile, lastFeature, reviewAttempts, approved, builds, messages: sanitizeMessages(messages) });
+  }, [html, activeFile, lastFeature, reviewAttempts, approved, builds, messages]);
 
   const idc = useRef(0);
   const mountId = useRef(Math.random().toString(36).slice(2, 7));
@@ -160,6 +161,7 @@ export function HarnessMode({ onReset }: { onReset?: () => void }) {
       const full = await streamOnce(url, body, (t) => setLiveHtml(t));
       const clean = bakeHarnessCompliance(cleanHtml(full));
       setHtml(clean);
+      setBuilds((b) => b + 1); // count this build round for the leaderboard
       setBuilding(false);
       setPreviewSig((s) => s + 1); // build complete → auto-open full-screen preview
       update(aid, { streaming: false, text: (isRefine ? "Updated" : "Build done") + " — built inside the locked harness. Submit for approval when you're ready." });
@@ -194,7 +196,7 @@ export function HarnessMode({ onReset }: { onReset?: () => void }) {
               {approved ? "Approved ✓" : reviewing ? "…" : "Submit for approval"}
             </button>
           )}
-          <GallerySubmit mode="harness" title={lastFeature} html={html} />
+          <GallerySubmit mode="harness" title={lastFeature} html={html} iterations={builds} />
         </>
       }
       input={{
