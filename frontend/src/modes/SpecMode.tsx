@@ -81,6 +81,7 @@ export function SpecMode({ onReset }: { onReset?: () => void }) {
   // the start of this iteration; iterFeedback = the requested feature.
   const [iterFeedback, setIterFeedback] = useState<string>(snap.iterFeedback ?? "");
   const [iterBase, setIterBase] = useState<Record<DocKey, string> | null>(snap.iterBase ?? null);
+  const [builds, setBuilds] = useState<number>(snap.builds ?? 0); // competition: build rounds taken
 
   // Persist progress so a reload restores it (drop transient writing→ready).
   useEffect(() => {
@@ -89,10 +90,10 @@ export function SpecMode({ onReset }: { onReset?: () => void }) {
     saveSnap(SNAP, {
       idea, slug, docs, html, fileStatus: cleanStatus, activeFile,
       gate, phase: phase === "execute" ? "tasks" : phase, reviewAttempts, approved,
-      iterFeedback, iterBase,
+      iterFeedback, iterBase, builds,
       messages: sanitizeMessages(messages),
     });
-  }, [idea, slug, docs, html, fileStatus, activeFile, gate, phase, reviewAttempts, approved, iterFeedback, iterBase, messages]);
+  }, [idea, slug, docs, html, fileStatus, activeFile, gate, phase, reviewAttempts, approved, iterFeedback, iterBase, builds, messages]);
 
   const idc = useRef(0);
   const mountId = useRef(Math.random().toString(36).slice(2, 7));
@@ -249,6 +250,7 @@ export function SpecMode({ onReset }: { onReset?: () => void }) {
     }
     setBuilding(false);
     setFile("index.html", "ready");
+    setBuilds((b) => b + 1); // count this build round for the leaderboard
     setPreviewSig((s) => s + 1); // all tasks done → auto-open full-screen preview
     setPhase("done");
     push({ role: "agent", author: "Kiro", text: "All tasks complete — open index.html › Preview to use the app, then Submit for approval when you're ready. Want to change anything? Describe it and I'll loop back through the spec." });
@@ -441,7 +443,7 @@ export function SpecMode({ onReset }: { onReset?: () => void }) {
               {approved ? "Approved ✓" : reviewing ? "…" : "Submit for approval"}
             </button>
           )}
-          <GallerySubmit mode="spec" title={idea} html={html} extras={{ requirements: docs.requirements }} />
+          <GallerySubmit mode="spec" title={idea} html={html} iterations={builds} extras={{ requirements: docs.requirements }} />
         </>
       }
       input={{

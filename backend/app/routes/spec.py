@@ -1,10 +1,10 @@
 """Spec-driven (Kiro-style) routes — steering, the three artifacts, per-task exec, verify."""
 from typing import Literal
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
-from .. import config, prompts
+from .. import auth, config, prompts
 from ..genai_client import GenAIRateLimited, build_input, llm_complete
 from ..routes.vibe import _parse_issues
 from ..sse import stream_response
@@ -45,7 +45,7 @@ async def steering():
     return {"files": [{"name": name, "lang": "markdown", "content": body} for name, body in prompts.STEERING.items()]}
 
 
-@router.post("/doc")
+@router.post("/doc", dependencies=[Depends(auth.require_active_mode("spec"))])
 async def doc(body: DocBody):
     if body.kind == "requirements":
         system, user = prompts.spec_requirements(body.idea, body.feedback, body.current)
@@ -56,7 +56,7 @@ async def doc(body: DocBody):
     return stream_response(system, user)
 
 
-@router.post("/task")
+@router.post("/task", dependencies=[Depends(auth.require_active_mode("spec"))])
 async def task(body: TaskBody):
     """Execute one task from tasks.md on top of the current code (Kiro-style)."""
     system, user = prompts.spec_task(
@@ -65,7 +65,7 @@ async def task(body: TaskBody):
     return stream_response(system, user)
 
 
-@router.post("/validate")
+@router.post("/validate", dependencies=[Depends(auth.require_active_mode("spec"))])
 async def validate(body: ValidateBody):
     system, user = prompts.spec_validate(body.idea, body.html, body.requirements, body.design)
     try:

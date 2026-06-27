@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import type { ChatMsg } from "../components/Ide";
-import { apiUrl } from "./api";
+import { apiUrl, authHeaders } from "./api";
 
 export type ComplianceResult = {
   rule: string;
@@ -29,7 +29,7 @@ const CATEGORY_LABEL: Record<string, string> = Object.fromEntries(
 export async function reviewCompliance(html: string, categories?: string[]): Promise<ComplianceReview> {
   const res = await fetch(apiUrl("/api/compliance/review"), {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: authHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(categories ? { html, categories } : { html }),
   });
   if (!res.ok) throw new Error(`Compliance review failed (${res.status})`);

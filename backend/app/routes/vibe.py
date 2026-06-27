@@ -1,16 +1,17 @@
 """Vibecoding routes — generate, refine (iterate loop), validate (self-check)."""
 import json
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
-from .. import config, prompts
+from .. import auth, config, prompts
 from ..genai_client import GenAIRateLimited, build_input, llm_complete
 from ..sse import stream_response
 
 _BUSY_ISSUE = {"severity": "low", "issue": "Model busy", "detail": "The shared model is busy — try the QA test again in a few seconds."}
 
-router = APIRouter(prefix="/api/vibe", tags=["vibe"])
+# Every route spends the shared GenAI key and requires the vibe lab to be unlocked.
+router = APIRouter(prefix="/api/vibe", tags=["vibe"], dependencies=[Depends(auth.require_active_mode("vibe"))])
 
 
 class GenerateBody(BaseModel):

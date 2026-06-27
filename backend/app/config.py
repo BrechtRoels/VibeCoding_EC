@@ -20,6 +20,17 @@ GENAI_CHAT_MODEL = os.getenv("GENAI_CHAT_MODEL", "bedrock.anthropic.claude-haiku
 
 USE_MOCK_AI = os.getenv("USE_MOCK_AI", "false").lower() == "true"
 
+# Shared access tokens. The studio token unlocks the participant app (LLM calls,
+# gallery submit); the wall token is the facilitator's host secret (clear/reset).
+# Sent by the client as the `X-Studio-Token` header and enforced server-side — the
+# old client-only password check was cosmetic. Set both to "" to disable auth.
+STUDIO_PASSWORD = os.getenv("STUDIO_PASSWORD", "PwCVibeCoding2026")
+WALL_PASSWORD = os.getenv("WALL_PASSWORD", "PwCVibeWall2026")
+# Facilitator admin secret — unlocks the /admin control screen that steers which
+# labs are in the training and locks/unlocks them live. Highest privilege
+# (admin >= host/wall >= studio/participant).
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "PwCVibeAdmin2026")
+
 # Max in-flight GenAI calls across all users on this process. Smooths bursts when
 # many people (e.g. a 50-person workshop) share one API key. Excess calls queue.
 GENAI_MAX_CONCURRENCY = int(os.getenv("GENAI_MAX_CONCURRENCY", "8"))

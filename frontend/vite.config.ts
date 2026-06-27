@@ -3,12 +3,14 @@ import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
-  // Two separate pages: the studio (index.html) and the projected wall (wall.html).
+  // Separate pages: the studio (index.html), the projected wall (wall.html),
+  // and the facilitator control screen (admin.html).
   build: {
     rollupOptions: {
       input: {
         main: "index.html",
         wall: "wall.html",
+        admin: "admin.html",
       },
     },
   },

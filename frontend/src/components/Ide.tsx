@@ -286,7 +286,7 @@ export function Ide(props: Props) {
           </div>
           <div className="ide-editor-body">
             {view === "preview" ? (
-              <Preview html={previewHtml ?? ""} title={props.projectName} placeholder="Run a build to see the live app" />
+              <Preview html={previewHtml ?? ""} title={props.projectName} placeholder="Run a build to see the live app" trusted />
             ) : (
               <CodeView editor={editor} />
             )}
@@ -352,6 +352,7 @@ export function Ide(props: Props) {
         open={autoFs}
         onClose={() => setAutoFs(false)}
         title={props.projectName}
+        trusted
       />
     </div>
   );

@@ -1,4 +1,4 @@
-import { apiUrl } from "./api";
+import { apiUrl, authHeaders } from "./api";
 
 export type GalleryEntry = {
   id: string;
@@ -9,9 +9,12 @@ export type GalleryEntry = {
   ts: number;
   requirements?: string; // spec mode: requirements.md, shown on the wall
   criteria?: string[]; // spec mode: chosen compliance categories
+  iterations?: number; // competition: build rounds taken
+  elapsed_sec?: number; // competition: seconds from lab open to submit (server-clocked)
+  score?: number; // competition: combined score (lower is better)
 };
 
-export type GalleryExtras = { requirements?: string; criteria?: string[] };
+export type GalleryExtras = { requirements?: string; criteria?: string[]; iterations?: number };
 
 export const MODE_LABEL: Record<GalleryEntry["mode"], string> = {
   vibe: "Vibecoding",
@@ -47,11 +50,11 @@ export async function submitGallery(
 ): Promise<void> {
   await fetch(apiUrl("/api/gallery"), {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: authHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ mode, title, html, author, ...extras }),
   });
 }
 
 export async function clearGallery(): Promise<void> {
-  await fetch(apiUrl("/api/gallery/clear"), { method: "POST" });
+  await fetch(apiUrl("/api/gallery/clear"), { method: "POST", headers: authHeaders() });
 }

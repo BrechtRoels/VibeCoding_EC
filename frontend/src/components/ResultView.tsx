@@ -52,6 +52,7 @@ export function ResultView({ liveCode, html, streaming, elapsedMs, title }: Prop
               html={html}
               title={title ?? "Generated app"}
               placeholder={streaming ? "Building… preview renders when done" : "Preview appears here"}
+              trusted
             />
           ) : (
             <CodePane code={liveCode || html} streaming={false} placeholder="No code yet" />

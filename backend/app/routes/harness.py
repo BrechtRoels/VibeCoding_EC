@@ -1,8 +1,8 @@
 """Harness routes — locked rule files, build, the house-lint gate, and auto-fix."""
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
-from .. import prompts
+from .. import auth, prompts
 from ..harness_assets import HARNESS_FILES, run_harness_check
 from ..sse import stream_response
 
@@ -39,20 +39,20 @@ async def config():
     }
 
 
-@router.post("/generate")
+@router.post("/generate", dependencies=[Depends(auth.require_active_mode("harness"))])
 async def generate(body: HarnessBody):
     system, user = prompts.harness_generate(body.feature)
     return stream_response(system, user)
 
 
-@router.post("/refine")
+@router.post("/refine", dependencies=[Depends(auth.require_active_mode("harness"))])
 async def refine(body: RefineBody):
     """Iterate on the current harness app (change buttons, etc.) staying compliant."""
     system, user = prompts.harness_refine(body.feature, body.current_html, body.feedback)
     return stream_response(system, user)
 
 
-@router.post("/check")
+@router.post("/check", dependencies=[Depends(auth.require_active_mode("harness"))])
 async def check(body: CheckBody):
     """The deterministic enforcement gate — runs house-lint against the build."""
     results = run_harness_check(body.html)
@@ -60,7 +60,7 @@ async def check(body: CheckBody):
     return {"passed": passed, "results": results}
 
 
-@router.post("/fix")
+@router.post("/fix", dependencies=[Depends(auth.require_active_mode("harness"))])
 async def fix(body: FixBody):
     system, user = prompts.harness_fix(body.feature, body.current_html, body.violations)
     return stream_response(system, user)

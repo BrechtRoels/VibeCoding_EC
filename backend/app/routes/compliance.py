@@ -3,9 +3,10 @@
 Shared across all three modes. Pure deterministic check (no LLM, no streaming)
 so a live workshop gets reproducible verdicts.
 """
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
+from .. import auth
 from ..compliance_assets import CATEGORIES, COMPLIANCE_RULES, run_compliance_check
 
 router = APIRouter(prefix="/api/compliance", tags=["compliance"])
@@ -22,7 +23,7 @@ async def rules():
     return {"rules": COMPLIANCE_RULES, "categories": CATEGORIES}
 
 
-@router.post("/review")
+@router.post("/review", dependencies=[Depends(auth.require_auth)])
 async def review(body: ReviewBody):
     """Run the compliance gate. Approved when every error-severity rule passes.
 
